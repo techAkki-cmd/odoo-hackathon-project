@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
  * @version 1.0
  */
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 @CrossOrigin(origins = {"http://localhost:5173", "http://localhost:3000"},
         allowCredentials = "true",
         maxAge = 3600)
