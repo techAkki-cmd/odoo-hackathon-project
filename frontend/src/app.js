@@ -7,8 +7,8 @@ import { renderLoginPage, attachLoginEventListeners } from "./pages/login.js";
 import { renderSignupPage, attachSignupEventListeners } from "./pages/signup.js";
 import { renderEmailVerification, attachEmailVerificationListeners } from "./pages/verification.js";
 import LandingPage, { attachLandingListeners } from './pages/landing.js';
-import DashboardPage, { attachDashboardListeners } from "./pages/dashboard.js";
-import UserDashboardPage, { attachUserDashboardListeners } from "./pages/dashboard.js";
+import DashboardPage, { attachDashboardListeners } from "./pages/Dashboard.js";
+import UserDashboardPage, { attachUserDashboardListeners } from "./pages/userdashboard.js";
 import OrdersPage, { attachOrdersListeners } from "./pages/orders.js";
 import LoginRental, { attachLoginRentalListeners } from "./pages/loginrental.js";
 import CartPage, { attachCartListeners } from "./pages/cart.js";
@@ -67,7 +67,7 @@ class AppState {
   }
 }
 
-// 🏆 MAIN APPLICATION CLASS - ALL YOUR FUNCTIONALITY PRESERVED
+// 🏆 MAIN APPLICATION CLASS - ENHANCED WITH LANDING INTEGRATION
 export class OdooHackathonApp {
   constructor() {
     // Core services
@@ -146,14 +146,14 @@ export class OdooHackathonApp {
       animation: "fadeIn",
     });
     // Landing Page
-    // this.routes.set("landing", {
-    //   component: LandingPage,
-    //   attachListeners: attachLandingListeners,
-    //   title: "Landing - Odoo Hackathon",
-    //   description: "Welcome to the Odoo Hackathon platform",
-    //   requiresAuth: false,
-    //   animation: "fadeIn",
-    // });
+    this.routes.set("landing", {
+      component: LandingPage,
+      attachListeners: attachLandingListeners,
+      title: "Landing - Odoo Hackathon",
+      description: "Welcome to the Odoo Hackathon platform",
+      requiresAuth: false,
+      animation: "fadeIn",
+    });
     // Rental Page
     this.routes.set("loginrental", {
       component: LoginRental,
@@ -324,15 +324,14 @@ async performPageTransition(route, options) {
                             </div>
                         </div>
                         <div class="brand-identity">
-                            <h1 class="brand-name">Odoo Hackathon</h1>
-                            <span class="brand-descriptor">Enterprise Platform</span>
+                            <h1 class="brand-name">RentHub</h1>
+                            <span class="brand-descriptor">Rental Platform</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Elite Loading Core -->
                 <div class="loading-core">
-                    <!-- Real-time Progress System -->
                     <div class="progress-system">
                         <div class="progress-header">
                             <span id="system-status" class="system-status">Initializing secure environment...</span>
@@ -342,7 +341,6 @@ async performPageTransition(route, options) {
                             </div>
                         </div>
 
-                        <!-- Advanced Progress Visualization -->
                         <div class="progress-track">
                             <div id="progress-fill" class="progress-fill">
                                 <div class="progress-gradient"></div>
@@ -350,7 +348,6 @@ async performPageTransition(route, options) {
                             </div>
                         </div>
 
-                        <!-- System Initialization Steps -->
                         <div class="init-sequence">
                             <div class="init-step" id="step-security">
                                 <div class="step-status"></div>
@@ -374,78 +371,11 @@ async performPageTransition(route, options) {
                             </div>
                         </div>
                     </div>
-
-                    <!-- Live Platform Preview -->
-                    <div class="platform-preview">
-                        <div class="preview-window">
-                            <div class="window-header">
-                                <div class="window-controls">
-                                    <div class="control-dot red"></div>
-                                    <div class="control-dot yellow"></div>
-                                    <div class="control-dot green"></div>
-                                </div>
-                                <span class="window-title">Platform Dashboard</span>
-                            </div>
-
-                            <div class="preview-content">
-                                <!-- Header Skeleton -->
-                                <div class="skeleton-header">
-                                    <div class="skeleton-nav-item"></div>
-                                    <div class="skeleton-nav-item"></div>
-                                    <div class="skeleton-nav-item"></div>
-                                    <div class="skeleton-profile"></div>
-                                </div>
-
-                                <!-- Content Skeleton -->
-                                <div class="skeleton-body">
-                                    <div class="skeleton-sidebar">
-                                        <div class="skeleton-menu-group">
-                                            <div class="skeleton-menu-item"></div>
-                                            <div class="skeleton-menu-item"></div>
-                                            <div class="skeleton-menu-item"></div>
-                                        </div>
-                                    </div>
-
-                                    <div class="skeleton-main">
-                                        <div class="skeleton-title-bar"></div>
-                                        <div class="skeleton-metrics">
-                                            <div class="skeleton-metric-card"></div>
-                                            <div class="skeleton-metric-card"></div>
-                                            <div class="skeleton-metric-card"></div>
-                                            <div class="skeleton-metric-card"></div>
-                                        </div>
-                                        <div class="skeleton-chart-area"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Platform Capabilities -->
-                        <div class="capabilities-showcase">
-                            <div class="capability-item">
-                                <div class="capability-icon">🔒</div>
-                                <span class="capability-text">Enterprise Security</span>
-                            </div>
-                            <div class="capability-item">
-                                <div class="capability-icon">⚡</div>
-                                <span class="capability-text">Real-time Collaboration</span>
-                            </div>
-                            <div class="capability-item">
-                                <div class="capability-icon">📊</div>
-                                <span class="capability-text">Advanced Analytics</span>
-                            </div>
-                            <div class="capability-item">
-                                <div class="capability-icon">🚀</div>
-                                <span class="capability-text">High Performance</span>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
-                <!-- Professional Footer -->
                 <div class="elite-footer">
                     <div class="system-info">
-                        <span id="loading-insight" class="loading-insight">Optimizing for your team's workflow patterns...</span>
+                        <span id="loading-insight" class="loading-insight">Optimizing for your rental experience...</span>
                     </div>
                     <div class="build-info">
                         <span class="build-version">v2.1.0</span>
@@ -644,9 +574,9 @@ async performPageTransition(route, options) {
                                 </div>
                                 <div>
                                     <h1 class="text-xl font-bold bg-gradient-to-r from-primary-600 to-purple-600 bg-clip-text text-transparent">
-                                        Odoo Hackathon
+                                        RentHub
                                     </h1>
-                                    <p class="text-xs text-gray-500">Championship Edition</p>
+                                    <p class="text-xs text-gray-500">Rental Platform</p>
                                 </div>
                             </div>
 
@@ -688,18 +618,18 @@ async performPageTransition(route, options) {
                                 <p class="text-lg opacity-90 mb-6">Ready to build something amazing at the Odoo Hackathon?</p>
 
                                 <div class="flex flex-wrap gap-4">
-                                    <button onclick="createNewProject()" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 flex items-center">
+                                    <button onclick="createNewProduct()" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 flex items-center">
                                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                                         </svg>
-                                        Start New Project
+                                        Add New Product
                                     </button>
 
-                                    <button onclick="joinTeam()" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 flex items-center">
+                                    <button onclick="viewAllProducts()" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 flex items-center">
                                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                                         </svg>
-                                        Join a Team
+                                        View Products
                                     </button>
                                 </div>
                             </div>
@@ -856,7 +786,7 @@ async performPageTransition(route, options) {
 
                         <h1 class="text-4xl font-bold text-gray-900 mb-4">🎉 Account Verified!</h1>
                         <p class="text-xl text-gray-600 mb-8 max-w-lg mx-auto">
-                            Congratulations! Your email has been successfully verified. You're now ready to participate in the Odoo Hackathon!
+                            Congratulations! Your email has been successfully verified. You're now ready to use RentHub!
                         </p>
 
                         <button
@@ -976,36 +906,20 @@ async performPageTransition(route, options) {
   injectPremiumLoadingStyles() {
     const styles = `
             <style id="premium-loading-styles">
-            /* ELITE PROFESSIONAL LOADING SCREEN 2025 - COMPLETE STYLES */
             .elite-loading-container {
                 min-height: 100vh;
                 background: linear-gradient(135deg, #fafbfc 0%, #f4f6f8 100%);
                 display: flex;
                 flex-direction: column;
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'SF Pro Display', Roboto, sans-serif;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
                 color: #1a1f36;
-                position: relative;
-                overflow: hidden;
-            }
-
-            .elite-loading-container::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background:
-                    radial-gradient(circle at 20% 20%, rgba(79, 70, 229, 0.03) 0%, transparent 50%),
-                    radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.03) 0%, transparent 50%);
-                pointer-events: none;
             }
 
             .elite-header {
                 padding: 2rem 3rem 1rem;
                 border-bottom: 1px solid rgba(0, 0, 0, 0.06);
                 background: rgba(255, 255, 255, 0.8);
-                backdrop-filter: blur(20px) saturate(180%);
+                backdrop-filter: blur(20px);
             }
 
             .brand-lockup {
@@ -1025,27 +939,6 @@ async performPageTransition(route, options) {
                 align-items: center;
                 justify-content: center;
                 color: white;
-                box-shadow:
-                    0 4px 6px -1px rgba(79, 70, 229, 0.1),
-                    0 2px 4px -1px rgba(79, 70, 229, 0.06);
-                position: relative;
-                overflow: hidden;
-            }
-
-            .logo-symbol::before {
-                content: '';
-                position: absolute;
-                top: -50%;
-                left: -50%;
-                width: 200%;
-                height: 200%;
-                background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-                animation: logoShine 3s ease-in-out infinite;
-            }
-
-            @keyframes logoShine {
-                0%, 100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-                50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
             }
 
             .brand-name {
@@ -1053,15 +946,12 @@ async performPageTransition(route, options) {
                 font-weight: 700;
                 margin: 0;
                 color: #1a1f36;
-                letter-spacing: -0.02em;
-                line-height: 1.2;
             }
 
             .brand-descriptor {
                 font-size: 0.875rem;
                 color: #6b7280;
                 font-weight: 500;
-                letter-spacing: 0.025em;
             }
 
             .loading-core {
@@ -1070,15 +960,14 @@ async performPageTransition(route, options) {
                 align-items: center;
                 justify-content: center;
                 padding: 4rem 3rem;
-                gap: 6rem;
                 max-width: 1200px;
                 margin: 0 auto;
                 width: 100%;
             }
 
             .progress-system {
-                flex: 1;
                 max-width: 480px;
+                width: 100%;
             }
 
             .progress-header {
@@ -1092,27 +981,17 @@ async performPageTransition(route, options) {
                 font-size: 1rem;
                 font-weight: 600;
                 color: #374151;
-                line-height: 1.4;
-            }
-
-            .progress-metrics {
-                display: flex;
-                flex-direction: column;
-                align-items: flex-end;
-                gap: 0.25rem;
             }
 
             .progress-value {
                 font-size: 1.125rem;
                 font-weight: 700;
                 color: #4f46e5;
-                font-feature-settings: 'tnum';
             }
 
             .eta-estimate {
                 font-size: 0.75rem;
                 color: #9ca3af;
-                font-weight: 500;
             }
 
             .progress-track {
@@ -1121,52 +1000,13 @@ async performPageTransition(route, options) {
                 border-radius: 3px;
                 overflow: hidden;
                 margin-bottom: 2rem;
-                position: relative;
-                box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
             }
 
             .progress-fill {
                 height: 100%;
                 width: 0%;
                 background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 50%, #10b981 100%);
-                border-radius: 3px;
-                transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-                position: relative;
-                overflow: hidden;
-            }
-
-            .progress-gradient {
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: linear-gradient(90deg,
-                    rgba(255, 255, 255, 0) 0%,
-                    rgba(255, 255, 255, 0.3) 50%,
-                    rgba(255, 255, 255, 0) 100%);
-                animation: progressShimmer 2s ease-in-out infinite;
-            }
-
-            .progress-pulse {
-                position: absolute;
-                top: -1px;
-                right: -2px;
-                width: 4px;
-                height: 8px;
-                background: rgba(255, 255, 255, 0.8);
-                border-radius: 2px;
-                animation: progressPulse 1s ease-in-out infinite;
-            }
-
-            @keyframes progressShimmer {
-                0%, 100% { transform: translateX(-100%); }
-                50% { transform: translateX(200%); }
-            }
-
-            @keyframes progressPulse {
-                0%, 100% { opacity: 0.6; transform: scaleY(1); }
-                50% { opacity: 1; transform: scaleY(1.2); }
+                transition: width 0.4s ease;
             }
 
             .init-sequence {
@@ -1180,18 +1020,7 @@ async performPageTransition(route, options) {
                 align-items: center;
                 gap: 0.75rem;
                 padding: 0.75rem 0;
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-
-            .init-step.active {
-                background: rgba(79, 70, 229, 0.04);
-                border-radius: 8px;
-                padding-left: 1rem;
-                padding-right: 1rem;
-            }
-
-            .init-step.completed {
-                opacity: 0.6;
+                transition: all 0.3s ease;
             }
 
             .step-status {
@@ -1200,27 +1029,14 @@ async performPageTransition(route, options) {
                 border-radius: 50%;
                 background: #d1d5db;
                 transition: all 0.3s ease;
-                position: relative;
             }
 
             .init-step.active .step-status {
                 background: #4f46e5;
-                box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
             }
 
             .init-step.completed .step-status {
                 background: #10b981;
-            }
-
-            .init-step.completed .step-status::after {
-                content: '✓';
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                font-size: 10px;
-                color: white;
-                font-weight: bold;
             }
 
             .step-label {
@@ -1230,217 +1046,9 @@ async performPageTransition(route, options) {
                 color: #374151;
             }
 
-            .init-step.active .step-label {
-                color: #1f2937;
-                font-weight: 600;
-            }
-
             .step-indicator {
                 font-size: 8px;
                 color: #d1d5db;
-                animation: indicatorPulse 2s ease-in-out infinite;
-            }
-
-            .init-step.active .step-indicator {
-                color: #4f46e5;
-            }
-
-            @keyframes indicatorPulse {
-                0%, 100% { opacity: 0.4; }
-                50% { opacity: 1; }
-            }
-
-            /* Platform Preview Styles */
-            .platform-preview {
-                flex: 1;
-                max-width: 600px;
-                display: flex;
-                flex-direction: column;
-                gap: 2rem;
-            }
-
-            .preview-window {
-                background: white;
-                border-radius: 12px;
-                box-shadow:
-                    0 20px 25px -5px rgba(0, 0, 0, 0.1),
-                    0 10px 10px -5px rgba(0, 0, 0, 0.04);
-                border: 1px solid rgba(0, 0, 0, 0.05);
-                overflow: hidden;
-            }
-
-            .window-header {
-                height: 44px;
-                background: #f9fafb;
-                border-bottom: 1px solid #e5e7eb;
-                display: flex;
-                align-items: center;
-                padding: 0 1rem;
-                gap: 0.75rem;
-            }
-
-            .window-controls {
-                display: flex;
-                gap: 0.5rem;
-            }
-
-            .control-dot {
-                width: 12px;
-                height: 12px;
-                border-radius: 50%;
-            }
-
-            .control-dot.red { background: #ef4444; }
-            .control-dot.yellow { background: #f59e0b; }
-            .control-dot.green { background: #10b981; }
-
-            .window-title {
-                font-size: 0.75rem;
-                font-weight: 500;
-                color: #6b7280;
-            }
-
-            .preview-content {
-                padding: 1.5rem;
-                min-height: 280px;
-            }
-
-            /* Enhanced Skeleton System */
-            .skeleton-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 1.5rem;
-                padding-bottom: 1rem;
-                border-bottom: 1px solid #f3f4f6;
-            }
-
-            .skeleton-nav-item {
-                height: 12px;
-                background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
-                background-size: 200% 100%;
-                border-radius: 6px;
-                animation: skeletonShimmer 1.5s ease-in-out infinite;
-            }
-
-            .skeleton-nav-item:nth-child(1) { width: 80px; }
-            .skeleton-nav-item:nth-child(2) { width: 60px; }
-            .skeleton-nav-item:nth-child(3) { width: 70px; }
-
-            .skeleton-profile {
-                width: 32px;
-                height: 32px;
-                background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
-                background-size: 200% 100%;
-                border-radius: 50%;
-                animation: skeletonShimmer 1.5s ease-in-out infinite;
-            }
-
-            .skeleton-body {
-                display: flex;
-                gap: 1.5rem;
-            }
-
-            .skeleton-sidebar {
-                width: 180px;
-            }
-
-            .skeleton-menu-group {
-                display: flex;
-                flex-direction: column;
-                gap: 0.75rem;
-            }
-
-            .skeleton-menu-item {
-                height: 10px;
-                background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
-                background-size: 200% 100%;
-                border-radius: 5px;
-                animation: skeletonShimmer 1.5s ease-in-out infinite;
-            }
-
-            .skeleton-menu-item:nth-child(1) { width: 120px; animation-delay: 0.1s; }
-            .skeleton-menu-item:nth-child(2) { width: 100px; animation-delay: 0.2s; }
-            .skeleton-menu-item:nth-child(3) { width: 140px; animation-delay: 0.3s; }
-
-            .skeleton-main {
-                flex: 1;
-            }
-
-            .skeleton-title-bar {
-                height: 16px;
-                width: 200px;
-                background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
-                background-size: 200% 100%;
-                border-radius: 8px;
-                margin-bottom: 1.5rem;
-                animation: skeletonShimmer 1.5s ease-in-out infinite;
-            }
-
-            .skeleton-metrics {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 1rem;
-                margin-bottom: 1.5rem;
-            }
-
-            .skeleton-metric-card {
-                height: 60px;
-                background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
-                background-size: 200% 100%;
-                border-radius: 8px;
-                animation: skeletonShimmer 1.5s ease-in-out infinite;
-            }
-
-            .skeleton-metric-card:nth-child(1) { animation-delay: 0.1s; }
-            .skeleton-metric-card:nth-child(2) { animation-delay: 0.2s; }
-            .skeleton-metric-card:nth-child(3) { animation-delay: 0.3s; }
-            .skeleton-metric-card:nth-child(4) { animation-delay: 0.4s; }
-
-            .skeleton-chart-area {
-                height: 120px;
-                background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
-                background-size: 200% 100%;
-                border-radius: 8px;
-                animation: skeletonShimmer 1.5s ease-in-out infinite;
-                animation-delay: 0.5s;
-            }
-
-            @keyframes skeletonShimmer {
-                0% { background-position: -200% 0; }
-                100% { background-position: 200% 0; }
-            }
-
-            .capabilities-showcase {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 1rem;
-            }
-
-            .capability-item {
-                display: flex;
-                align-items: center;
-                gap: 0.75rem;
-                padding: 1rem;
-                background: rgba(255, 255, 255, 0.8);
-                border: 1px solid rgba(0, 0, 0, 0.05);
-                border-radius: 8px;
-                transition: all 0.3s ease;
-            }
-
-            .capability-item:hover {
-                transform: translateY(-1px);
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            }
-
-            .capability-icon {
-                font-size: 1.25rem;
-            }
-
-            .capability-text {
-                font-size: 0.875rem;
-                font-weight: 500;
-                color: #374151;
             }
 
             .elite-footer {
@@ -1464,69 +1072,11 @@ async performPageTransition(route, options) {
                 gap: 0.5rem;
                 font-size: 0.75rem;
                 color: #9ca3af;
-                font-weight: 500;
             }
 
             .build-version {
                 color: #4f46e5;
                 font-weight: 600;
-            }
-
-            .build-separator {
-                color: #d1d5db;
-            }
-
-            /* Responsive Design */
-            @media (max-width: 1200px) {
-                .loading-core {
-                    flex-direction: column;
-                    gap: 3rem;
-                    padding: 3rem 2rem;
-                }
-
-                .progress-system, .platform-preview {
-                    max-width: 600px;
-                    width: 100%;
-                }
-            }
-
-            @media (max-width: 768px) {
-                .elite-header, .elite-footer {
-                    padding-left: 1.5rem;
-                    padding-right: 1.5rem;
-                }
-
-                .brand-lockup {
-                    flex-direction: column;
-                    gap: 0.75rem;
-                    text-align: center;
-                }
-
-                .brand-identity {
-                    align-items: center;
-                }
-
-                .loading-core {
-                    padding: 2rem 1.5rem;
-                }
-
-                .skeleton-body {
-                    flex-direction: column;
-                }
-
-                .skeleton-sidebar {
-                    width: 100%;
-                }
-
-                .capabilities-showcase {
-                    grid-template-columns: 1fr;
-                }
-
-                .elite-footer {
-                    flex-direction: column;
-                    gap: 1rem;
-                    text-align: center;
-                }
             }
             </style>
         `;
