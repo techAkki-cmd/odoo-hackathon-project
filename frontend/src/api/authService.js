@@ -105,7 +105,12 @@ class AuthenticationService {
         firstName: utils.sanitizeInput(userData.firstName).trim(),
         lastName: utils.sanitizeInput(userData.lastName).trim(),
         email: utils.sanitizeInput(userData.email).trim().toLowerCase(),
-        password: userData.password // Don't sanitize password
+        password: userData.password,
+
+        // ✅ CRITICAL: Send uppercase enum value
+        userRole: (userData.userRole || 'CUSTOMER').toUpperCase(), // Force uppercase
+        location: utils.sanitizeInput(userData.location || '').trim(),
+        phoneNumber: utils.sanitizeInput(userData.phoneNumber || '').trim()
       };
 
       console.log('📤 Sending registration request:', {

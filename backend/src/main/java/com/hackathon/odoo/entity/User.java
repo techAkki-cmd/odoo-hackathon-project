@@ -89,7 +89,7 @@ public class User {
     private String bio;
 
     // ✅ RATING SYSTEM (for rental platform)
-    @Column(name = "average_rating", precision = 3, scale = 2)
+    @Column(name = "average_rating", precision = 3)
     private Double averageRating = 0.0;
 
     @Column(name = "total_reviews", nullable = false)
