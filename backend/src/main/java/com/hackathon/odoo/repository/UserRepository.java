@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import com.hackathon.odoo.entity.User.UserRole;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -290,4 +291,160 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "ORDER BY count DESC",
             nativeQuery = true)
     List<Object[]> getEmailDomainStatistics();
+
+    // ✅ RENTAL MANAGEMENT SPECIFIC QUERIES (ADD THESE TO YOUR EXISTING REPOSITORY)
+
+    /**
+     * Find users by role (for role-based authentication)
+     * @param userRole the user role to search for
+     * @return List of users with the specified role
+     */
+    List<User> findByUserRole(User.UserRole userRole);
+
+    /**
+     * Find users by role with pagination
+     * @param userRole the user role to search for
+     * @param pageable pagination information
+     * @return Page of users with the specified role
+     */
+    Page<User> findByUserRole(User.UserRole userRole, Pageable pageable);
+
+    /**
+     * Find users by location (case insensitive, partial match)
+     * @param location the location to search for
+     * @return List of users in the specified location
+     */
+    List<User> findByLocationContainingIgnoreCase(String location);
+
+    /**
+     * Find users by role and location
+     * @param userRole the user role
+     * @param location the location (partial match)
+     * @return List of users matching role and location
+     */
+    @Query("SELECT u FROM User u WHERE u.userRole = :userRole AND LOWER(u.location) LIKE LOWER(CONCAT('%', :location, '%'))")
+    List<User> findByUserRoleAndLocation(@Param("userRole") User.UserRole userRole,
+                                         @Param("location") String location);
+
+    /**
+     * Find business users (owners and businesses) in a location
+     * @param location the location to search
+     * @return List of business users in the location
+     */
+    @Query("SELECT u FROM User u WHERE u.userRole IN ('OWNER', 'BUSINESS') AND LOWER(u.location) LIKE LOWER(CONCAT('%', :location, '%'))")
+    List<User> findBusinessUsersInLocation(@Param("location") String location);
+
+    /**
+     * Find customers in a location
+     * @param location the location to search
+     * @return List of customers in the location
+     */
+    @Query("SELECT u FROM User u WHERE u.userRole = 'CUSTOMER' AND LOWER(u.location) LIKE LOWER(CONCAT('%', :location, '%'))")
+    List<User> findCustomersInLocation(@Param("location") String location);
+
+    /**
+     * Find users with business information
+     * @return List of users who have filled business details
+     */
+    @Query("SELECT u FROM User u WHERE u.businessName IS NOT NULL AND u.businessName != ''")
+    List<User> findUsersWithBusinessInfo();
+
+    /**
+     * Check if email exists for a specific role
+     * @param email the email to check
+     * @param userRole the user role
+     * @return true if email exists for the role
+     */
+    boolean existsByEmailAndUserRole(String email, User.UserRole userRole);
+
+// ✅ SECURITY QUERIES FOR LOGIN ATTEMPTS
+
+    /**
+     * Find users with failed login attempts
+     * @param maxAttempts the maximum allowed attempts
+     * @return List of users with high login attempts
+     */
+    @Query("SELECT u FROM User u WHERE u.loginAttempts >= :maxAttempts")
+    List<User> findUsersWithHighLoginAttempts(@Param("maxAttempts") Integer maxAttempts);
+
+    /**
+     * Find currently locked out users
+     * @param currentTime current timestamp
+     * @return List of locked out users
+     */
+    @Query("SELECT u FROM User u WHERE u.lockoutTime IS NOT NULL AND u.lockoutTime > :currentTime")
+    List<User> findLockedOutUsers(@Param("currentTime") LocalDateTime currentTime);
+
+    /**
+     * Update user login attempts
+     * @param userId the user ID
+     * @param attempts the number of attempts
+     * @return number of updated records
+     */
+    @Modifying
+    @Transactional
+    @Query("UPDATE User u SET u.loginAttempts = :attempts WHERE u.id = :userId")
+    int updateLoginAttempts(@Param("userId") Long userId, @Param("attempts") Integer attempts);
+
+    /**
+     * Reset login attempts and clear lockout
+     * @param userId the user ID
+     * @return number of updated records
+     */
+    @Modifying
+    @Transactional
+    @Query("UPDATE User u SET u.loginAttempts = 0, u.lockoutTime = NULL WHERE u.id = :userId")
+    int resetLoginAttempts(@Param("userId") Long userId);
+
+    /**
+     * Set user lockout time
+     * @param userId the user ID
+     * @param lockoutTime the lockout expiration time
+     * @return number of updated records
+     */
+    @Modifying
+    @Transactional
+    @Query("UPDATE User u SET u.lockoutTime = :lockoutTime WHERE u.id = :userId")
+    int setUserLockout(@Param("userId") Long userId, @Param("lockoutTime") LocalDateTime lockoutTime);
+
+    /**
+     * Update last login time
+     * @param userId the user ID
+     * @param lastLoginTime the last login timestamp
+     * @return number of updated records
+     */
+    @Modifying
+    @Transactional
+    @Query("UPDATE User u SET u.lastLoginTime = :lastLoginTime WHERE u.id = :userId")
+    int updateLastLoginTime(@Param("userId") Long userId, @Param("lastLoginTime") LocalDateTime lastLoginTime);
+
+// ✅ RENTAL PLATFORM STATISTICS
+
+    /**
+     * Get user role distribution statistics
+     * @return List of role counts [role, count]
+     */
+    @Query(value = "SELECT user_role, COUNT(*) FROM users GROUP BY user_role", nativeQuery = true)
+    List<Object[]> getUserRoleDistribution();
+
+    /**
+     * Get location-wise user statistics
+     * @return List of location statistics [location, userCount]
+     */
+    @Query(value = "SELECT location, COUNT(*) as user_count FROM users WHERE location IS NOT NULL GROUP BY location ORDER BY user_count DESC LIMIT 10", nativeQuery = true)
+    List<Object[]> getTopLocationsByUsers();
+
+    /**
+     * Get business user statistics
+     * @return Array containing [totalBusinessUsers, ownersCount, businessesCount]
+     */
+    @Query("SELECT " +
+            "SUM(CASE WHEN u.userRole IN ('OWNER', 'BUSINESS') THEN 1 ELSE 0 END), " +
+            "SUM(CASE WHEN u.userRole = 'OWNER' THEN 1 ELSE 0 END), " +
+            "SUM(CASE WHEN u.userRole = 'BUSINESS' THEN 1 ELSE 0 END) " +
+            "FROM User u")
+    Object[] getBusinessUserStatistics();
+
 }
+
+

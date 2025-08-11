@@ -122,18 +122,49 @@ export function renderSignupPage() {
         <div class="bg-white rounded-2xl p-8 text-center shadow-2xl max-w-sm w-full mx-4">
           <div class="animate-spin w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full mx-auto mb-4"></div>
           <p class="text-gray-600 font-medium mb-2">Creating your account...</p>
-          <p class="text-gray-500 text-sm">Please wait while we set up your Odoo Hackathon account</p>
+          <p class="text-gray-500 text-sm">Please wait while we set up your rental management account</p>
         </div>
       </div>
 
       <div class="bg-white bg-opacity-90 rounded-xl shadow-xl max-w-lg w-full p-8 relative">
+        <!-- Premium Gradient Overlay -->
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 via-blue-500 to-green-500"></div>
+
         <header class="text-center mb-8">
           <div class="inline-block p-4 rounded-full bg-gradient-to-r from-purple-500 to-blue-600 text-white mb-4">
             ${icons.rocket}
           </div>
-          <h1 class="text-3xl font-bold text-gray-800">Create Account</h1>
-          <p class="text-gray-600 mt-2">Join the Odoo Hackathon Community</p>
+          <h1 class="text-3xl font-bold text-gray-800">Join RentHub</h1>
+          <p class="text-gray-600 mt-2">Your Ultimate Rental Management Platform</p>
         </header>
+
+        <!-- ✅ ROLE SELECTION - INTEGRATED -->
+        <div class="role-selection mb-6">
+          <h3 class="text-lg font-semibold mb-4 text-center">I want to:</h3>
+          <div class="grid gap-3">
+            <label class="role-card border-2 border-gray-200 rounded-xl p-4 cursor-pointer hover:border-purple-500 transition-all duration-200">
+              <input type="radio" name="userRole" value="customer" class="hidden" checked>
+              <div class="flex items-center">
+                <div class="icon mr-4 text-2xl">🏠</div>
+                <div>
+                  <h4 class="font-bold text-gray-800">Rent Equipment/Property</h4>
+                  <p class="text-sm text-gray-600">Browse and book rental items</p>
+                </div>
+              </div>
+            </label>
+
+            <label class="role-card border-2 border-gray-200 rounded-xl p-4 cursor-pointer hover:border-purple-500 transition-all duration-200">
+              <input type="radio" name="userRole" value="owner" class="hidden">
+              <div class="flex items-center">
+                <div class="icon mr-4 text-2xl">💼</div>
+                <div>
+                  <h4 class="font-bold text-gray-800">List My Equipment/Property</h4>
+                  <p class="text-sm text-gray-600">Rent out my items and earn money</p>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
 
         <!-- Enhanced Form with Better Accessibility -->
         <form id="signup-form" class="space-y-6" novalidate>
@@ -201,6 +232,46 @@ export function renderSignupPage() {
             </div>
             <!-- Email availability indicator -->
             <div id="email-availability" class="text-xs mt-1 hidden"></div>
+          </div>
+
+          <!-- ✅ LOCATION FIELD - INTEGRATED -->
+          <div class="location-field">
+            <label class="block text-sm font-semibold text-gray-700 mb-1">
+              Location *
+            </label>
+            <div class="relative">
+              <input type="text" name="location" id="location" placeholder="Enter your city or area"
+                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200">
+              <button type="button" id="detect-location"
+                      class="absolute right-3 top-1/2 -translate-y-1/2 text-purple-600 hover:text-purple-800 transition-colors duration-200">
+                📍 Detect
+              </button>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">We'll show you nearby rental options</p>
+            <div id="location-error" class="text-red-500 text-xs mt-1 hidden flex items-center">
+              <span class="mr-1">⚠️</span>
+              <span class="error-text"></span>
+            </div>
+          </div>
+
+          <!-- ✅ BUSINESS FIELDS - INTEGRATED (Hidden by default) -->
+          <div id="business-fields" class="hidden space-y-4">
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 class="font-semibold text-blue-800 mb-3">📋 Business Information</h4>
+              <div class="space-y-4">
+                <input type="text" name="businessName" id="businessName" placeholder="Business/Company Name"
+                       class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500">
+                <input type="text" name="businessLicense" placeholder="Business License Number (Optional)"
+                       class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500">
+                <select name="businessType" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500">
+                  <option value="">Select Business Type</option>
+                  <option value="equipment-rental">Equipment Rental</option>
+                  <option value="property-rental">Property Rental</option>
+                  <option value="vehicle-rental">Vehicle Rental</option>
+                  <option value="individual">Individual Owner</option>
+                </select>
+              </div>
+            </div>
           </div>
 
           <!-- Enhanced Password Field -->
@@ -286,6 +357,30 @@ export function renderSignupPage() {
           </button>
         </form>
 
+        <!-- ✅ TRUST SIGNALS - INTEGRATED -->
+        <div class="trust-indicators mt-6 text-center">
+          <div class="flex justify-center items-center space-x-6 text-sm text-gray-600">
+            <div class="flex items-center">
+              <svg class="w-4 h-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+              </svg>
+              <span>Secure Payments</span>
+            </div>
+            <div class="flex items-center">
+              <svg class="w-4 h-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span>Verified Owners</span>
+            </div>
+            <div class="flex items-center">
+              <svg class="w-4 h-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 109.75 9.75c0-.916-.126-1.802-.361-2.634z"></path>
+              </svg>
+              <span>24/7 Support</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Enhanced Login Link -->
         <div class="mt-6 text-center p-4 bg-gray-50 rounded-lg">
           <span class="text-gray-700">Already have an account?</span>
@@ -297,6 +392,89 @@ export function renderSignupPage() {
     </div>
   `;
 }
+
+
+// Add role selection to signup.js
+const roleSelection = `
+  <div class="role-selection mb-6">
+    <h3 class="text-lg font-semibold mb-4">I want to:</h3>
+    <div class="grid gap-4">
+      <label class="role-card border-2 rounded-xl p-4 cursor-pointer hover:border-purple-500">
+        <input type="radio" name="userRole" value="customer" class="hidden">
+        <div class="flex items-center">
+          <div class="icon mr-4">🏠</div>
+          <div>
+            <h4 class="font-bold">Rent Equipment/Property</h4>
+            <p class="text-sm text-gray-600">Browse and book rental items</p>
+          </div>
+        </div>
+      </label>
+
+      <label class="role-card border-2 rounded-xl p-4 cursor-pointer hover:border-purple-500">
+        <input type="radio" name="userRole" value="owner" class="hidden">
+        <div class="flex items-center">
+          <div class="icon mr-4">💼</div>
+          <div>
+            <h4 class="font-bold">List My Equipment/Property</h4>
+            <p class="text-sm text-gray-600">Rent out my items and earn money</p>
+          </div>
+        </div>
+      </label>
+    </div>
+  </div>
+`;
+// Add conditional business fields
+const businessFields = `
+  <div id="business-fields" class="hidden space-y-4">
+    <input type="text" name="businessName" placeholder="Business/Company Name"
+           class="w-full px-4 py-4 border border-gray-200 rounded-xl">
+    <input type="text" name="businessLicense" placeholder="Business License Number (Optional)"
+           class="w-full px-4 py-4 border border-gray-200 rounded-xl">
+    <select name="businessType" class="w-full px-4 py-4 border border-gray-200 rounded-xl">
+      <option value="">Select Business Type</option>
+      <option value="equipment-rental">Equipment Rental</option>
+      <option value="property-rental">Property Rental</option>
+      <option value="vehicle-rental">Vehicle Rental</option>
+      <option value="individual">Individual Owner</option>
+    </select>
+  </div>
+`;
+const trustSignals = `
+  <div class="trust-indicators mt-6 text-center">
+    <div class="flex justify-center items-center space-x-6 text-sm text-gray-600">
+      <div class="flex items-center">
+        <svg class="w-4 h-4 text-green-500 mr-1"><!-- Shield icon --></svg>
+        <span>Secure Payments</span>
+      </div>
+      <div class="flex items-center">
+        <svg class="w-4 h-4 text-green-500 mr-1"><!-- Verify icon --></svg>
+        <span>Verified Owners</span>
+      </div>
+      <div class="flex items-center">
+        <svg class="w-4 h-4 text-green-500 mr-1"><!-- Support icon --></svg>
+        <span>24/7 Support</span>
+      </div>
+    </div>
+  </div>
+`;
+// Add location field to signup
+const locationField = `
+  <div class="location-field">
+    <label class="block text-sm font-semibold text-gray-700 mb-1">
+      Location *
+    </label>
+    <div class="relative">
+      <input type="text" name="location" placeholder="Enter your city or area"
+             class="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500">
+      <button type="button" id="detect-location"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-purple-600 hover:text-purple-800">
+        📍 Detect
+      </button>
+    </div>
+    <p class="text-xs text-gray-500 mt-1">We'll show you nearby rental options</p>
+  </div>
+`;
+
 
 // ✅ ENHANCED field validation helpers
 function showFieldError(fieldName, message) {
@@ -484,11 +662,19 @@ async function handleSignup(event) {
 
   // Prepare signup data - EXACTLY matches backend RegisterRequest DTO
   const signupData = {
-    firstName,     // matches RegisterRequest.firstName
-    lastName,      // matches RegisterRequest.lastName
-    email,         // matches RegisterRequest.email (lowercase)
-    password       // matches RegisterRequest.password
-  };
+      firstName,
+      lastName,
+      email,
+      password,
+      userRole: document.querySelector('input[name="userRole"]:checked')?.value || 'customer',
+      location: document.getElementById('location')?.value.trim(),
+      // Business fields (if owner)
+      ...(document.querySelector('input[name="userRole"]:checked')?.value === 'owner' && {
+        businessName: document.getElementById('businessName')?.value.trim(),
+        businessLicense: document.querySelector('input[name="businessLicense"]')?.value.trim(),
+        businessType: document.querySelector('select[name="businessType"]')?.value
+      })
+    };
 
   console.log('📝 Signup data prepared for backend:', {
     firstName: signupData.firstName,
@@ -814,6 +1000,18 @@ export function attachSignupEventListeners() {
     });
   }
 
+  const roleCards = document.querySelectorAll('input[name="userRole"]');
+    roleCards.forEach(card => {
+      card.addEventListener('change', (e) => {
+        handleRoleSelection(e.target.value);
+        updateUIForRole(e.target.value);
+      });
+    });
+const detectLocationBtn = document.getElementById('detect-location');
+  if (detectLocationBtn) {
+    detectLocationBtn.addEventListener('click', detectUserLocation);
+  }
+
   // Enhanced real-time validation
   const fields = ['firstName', 'lastName', 'email', 'password', 'confirmPassword'];
 
@@ -862,7 +1060,75 @@ export function attachSignupEventListeners() {
 
   console.log('✅ All enhanced signup event listeners attached successfully');
 }
+function handleRoleSelection(role) {
+  const businessFields = document.getElementById('business-fields');
+  const submitButton = document.getElementById('signup-submit');
+  const submitText = document.getElementById('submit-text');
 
+  if (role === 'owner') {
+    businessFields.classList.remove('hidden');
+    submitText.textContent = 'Start Earning with RentHub';
+  } else {
+    businessFields.classList.add('hidden');
+    submitText.textContent = 'Start Renting with RentHub';
+  }
+
+  // Update visual selection
+  document.querySelectorAll('.role-card').forEach(card => {
+    card.classList.remove('border-purple-500', 'bg-purple-50');
+    card.classList.add('border-gray-200');
+  });
+
+  const selectedCard = document.querySelector(`input[value="${role}"]`).closest('.role-card');
+  selectedCard.classList.add('border-purple-500', 'bg-purple-50');
+  selectedCard.classList.remove('border-gray-200');
+}
+
+function updateUIForRole(role) {
+  const header = document.querySelector('header h1');
+  if (role === 'owner') {
+    header.textContent = 'Start Your Rental Business';
+  } else {
+    header.textContent = 'Find Perfect Rentals';
+  }
+}
+
+function detectUserLocation() {
+  const locationInput = document.getElementById('location');
+  const detectBtn = document.getElementById('detect-location');
+
+  if ('geolocation' in navigator) {
+    detectBtn.textContent = '⏳';
+    detectBtn.disabled = true;
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          // You can integrate with a geocoding service here
+          locationInput.value = 'Location detected'; // Simplified for hackathon
+          detectBtn.textContent = '✅';
+          setTimeout(() => {
+            detectBtn.textContent = '📍 Detect';
+            detectBtn.disabled = false;
+          }, 2000);
+        } catch (error) {
+          detectBtn.textContent = '❌';
+          setTimeout(() => {
+            detectBtn.textContent = '📍 Detect';
+            detectBtn.disabled = false;
+          }, 2000);
+        }
+      },
+      (error) => {
+        detectBtn.textContent = '❌';
+        setTimeout(() => {
+          detectBtn.textContent = '📍 Detect';
+          detectBtn.disabled = false;
+        }, 2000);
+      }
+    );
+  }
+}
 // ✅ ENHANCED form completion checker
 function checkFormCompletion() {
   const firstName = document.getElementById('firstName')?.value.trim() || '';

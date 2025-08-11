@@ -74,18 +74,39 @@ export function renderLoginPage(initialEmail = '') {
         <div class="bg-white rounded-2xl p-8 text-center shadow-2xl max-w-sm w-full mx-4">
           <div class="animate-spin w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full mx-auto mb-4"></div>
           <p class="text-gray-600 font-medium mb-2">Signing you in...</p>
-          <p class="text-gray-500 text-sm">Please wait while we verify your credentials</p>
+          <p class="text-gray-500 text-sm">Connecting to your RentHub account</p>
         </div>
       </div>
 
       <div class="bg-white bg-opacity-90 rounded-xl shadow-xl max-w-md w-full p-8 relative">
+        <!-- Premium Gradient Overlay -->
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-green-500"></div>
+
+        <!-- Updated Header -->
         <header class="text-center mb-8">
           <div class="inline-block p-4 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white mb-4">
             ${icons.rocket}
           </div>
           <h1 class="text-3xl font-bold text-gray-800">Welcome Back</h1>
-          <p class="text-gray-600 mt-2">Sign in to your Odoo Hackathon account</p>
+          <p class="text-gray-600 mt-2">Sign in to your RentHub account</p>
         </header>
+
+        <!-- Role Selection Tabs -->
+        <div class="role-tabs mb-6">
+          <div class="flex rounded-lg bg-gray-100 p-1">
+            <button type="button" class="role-tab active flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-200"
+                    data-role="customer">
+              🏠 Customer
+            </button>
+            <button type="button" class="role-tab flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-200"
+                    data-role="owner">
+              💼 Property Owner
+            </button>
+          </div>
+          <p class="text-xs text-gray-500 mt-2 text-center" id="role-description">
+            Sign in to browse and book rentals
+          </p>
+        </div>
 
         <!-- Enhanced Form with Better Accessibility -->
         <form id="login-form" class="space-y-6" novalidate>
@@ -167,11 +188,45 @@ export function renderLoginPage(initialEmail = '') {
           </button>
         </form>
 
+        <!-- Trust Signals -->
+        <div class="trust-indicators mt-4 mb-6 text-center">
+          <div class="flex justify-center items-center space-x-4 text-sm text-gray-600">
+            <div class="flex items-center">
+              <svg class="w-4 h-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+              </svg>
+              <span>Secure</span>
+            </div>
+            <div class="flex items-center">
+              <svg class="w-4 h-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span>Verified</span>
+            </div>
+            <div class="flex items-center">
+              <svg class="w-4 h-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span>24/7 Support</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Enhanced Account Creation Link -->
         <div class="mt-6 text-center p-4 bg-gray-50 rounded-lg">
-          <span class="text-gray-700">Don't have an account?</span>
+          <span class="text-gray-700">New to RentHub?</span>
           <button type="button" id="create-account" class="ml-2 text-blue-600 hover:text-blue-800 underline font-semibold transition-colors duration-200">
             Create Account
+          </button>
+        </div>
+
+        <!-- Quick Signup Option -->
+        <div class="quick-signup-option mt-4 p-4 bg-blue-50 rounded-lg border">
+          <h4 class="font-semibold text-blue-800 mb-2">🚀 Need to book urgently?</h4>
+          <p class="text-sm text-blue-700 mb-3">Create account with just email and phone</p>
+          <button type="button" id="quick-signup"
+                  class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 text-sm transition-colors duration-200">
+            Quick Signup (30 seconds)
           </button>
         </div>
 
@@ -213,6 +268,33 @@ export function renderLoginPage(initialEmail = '') {
     </div>
   `;
 }
+
+
+const roleSelector = `
+  <div class="role-tabs mb-6">
+    <div class="flex rounded-lg bg-gray-100 p-1">
+      <button type="button" class="role-tab active flex-1 py-2 px-4 rounded-md text-sm font-medium"
+              data-role="customer">
+        Customer
+      </button>
+      <button type="button" class="role-tab flex-1 py-2 px-4 rounded-md text-sm font-medium"
+              data-role="owner">
+        Property Owner
+      </button>
+    </div>
+  </div>
+`;
+
+const quickSignup = `
+  <div class="quick-signup-option mt-4 p-4 bg-blue-50 rounded-lg border">
+    <h4 class="font-semibold text-blue-800 mb-2">🚀 Need to book urgently?</h4>
+    <p class="text-sm text-blue-700 mb-3">Create account with just email and phone</p>
+    <button type="button" id="quick-signup"
+            class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 text-sm">
+      Quick Signup (30 seconds)
+    </button>
+  </div>
+`;
 
 // ✅ ENHANCED field validation helpers
 function showFieldError(fieldName, message) {
@@ -437,26 +519,51 @@ function showEnhancedSuccessMessage(response) {
 
   document.body.appendChild(modal);
 
-  // Handle continue button
+  // ✅ UPDATED: Role-based navigation
   modal.querySelector('#continue-to-dashboard').addEventListener('click', () => {
     modal.remove();
-    const redirectUrl = response.redirectUrl || '/dashboard';
+
+    // Navigate based on user role from response
+    const userRole = response.user?.role || 'customer';
+    let redirectView = 'dashboard';
+
+    if (userRole === 'owner' || userRole === 'business') {
+      redirectView = 'owner-dashboard';
+    } else if (userRole === 'admin') {
+      redirectView = 'admin-dashboard';
+    } else {
+      redirectView = 'customer-dashboard';
+    }
+
     window.dispatchEvent(new CustomEvent('navigate', {
-      detail: { view: redirectUrl.replace('/', '') || 'dashboard' }
+      detail: { view: redirectView }
     }));
   });
 
-  // Auto close after 3 seconds
+  // ✅ UPDATED: Auto close with role-based routing
   setTimeout(() => {
     if (document.body.contains(modal)) {
       modal.remove();
-      const redirectUrl = response.redirectUrl || '/dashboard';
+
+      // Navigate based on user role from response
+      const userRole = response.user?.role || 'customer';
+      let redirectView = 'dashboard';
+
+      if (userRole === 'owner' || userRole === 'business') {
+        redirectView = 'owner-dashboard';
+      } else if (userRole === 'admin') {
+        redirectView = 'admin-dashboard';
+      } else {
+        redirectView = 'customer-dashboard';
+      }
+
       window.dispatchEvent(new CustomEvent('navigate', {
-        detail: { view: redirectUrl.replace('/', '') || 'dashboard' }
+        detail: { view: redirectView }
       }));
     }
   }, 3000);
 }
+
 
 // ✅ NEW: Enhanced alert system
 function showEnhancedAlert(message, type = 'info') {
@@ -785,6 +892,22 @@ export function attachLoginEventListeners() {
       showForgotPasswordModal(currentEmail);
     });
   }
+  const roleTabs = document.querySelectorAll('.role-tab');
+    roleTabs.forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        handleRoleSelection(e.target.dataset.role);
+      });
+    });
+
+    // ✅ NEW: Quick signup handler
+    const quickSignupBtn = document.getElementById('quick-signup');
+    if (quickSignupBtn) {
+      quickSignupBtn.addEventListener('click', () => {
+        window.dispatchEvent(new CustomEvent('navigate', {
+          detail: { view: 'signup', quickMode: true }
+        }));
+      });
+    }
 
   // Social login buttons
   const googleLogin = document.getElementById('google-login');
@@ -845,7 +968,35 @@ export function attachLoginEventListeners() {
 
   console.log('✅ All enhanced login event listeners attached successfully');
 }
+function handleRoleSelection(role) {
+  // Update active tab styling
+  document.querySelectorAll('.role-tab').forEach(tab => {
+    tab.classList.remove('active', 'bg-white', 'text-blue-600', 'shadow-sm');
+    tab.classList.add('text-gray-500', 'hover:text-gray-700');
+  });
 
+  const activeTab = document.querySelector(`[data-role="${role}"]`);
+  activeTab.classList.add('active', 'bg-white', 'text-blue-600', 'shadow-sm');
+  activeTab.classList.remove('text-gray-500', 'hover:text-gray-700');
+
+  // Update description text
+  const description = document.getElementById('role-description');
+  if (role === 'customer') {
+    description.textContent = 'Sign in to browse and book rentals';
+  } else {
+    description.textContent = 'Sign in to manage your rental business';
+  }
+
+  // Update form submit button text based on role
+  const submitText = document.getElementById('submit-text');
+  if (submitText && !isLoading) {
+    if (role === 'customer') {
+      submitText.textContent = 'Start Renting';
+    } else {
+      submitText.textContent = 'Manage Properties';
+    }
+  }
+}
 // ✅ ENHANCED form completion checker
 function checkFormCompletion() {
   const email = document.getElementById('email')?.value.trim() || '';
@@ -929,6 +1080,33 @@ const loginStyles = `
 
 .focus\\:ring-green-500:focus {
   --tw-ring-color: rgb(34 197 94 / 0.5);
+}
+.role-tab.active {
+  background-color: white;
+  color: rgb(37 99 235);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  font-weight: 600;
+}
+
+.role-tab {
+  transition: all 0.2s ease;
+}
+
+.role-tab:hover:not(.active) {
+  color: rgb(55 65 81);
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Enhanced trust indicators */
+.trust-indicators {
+  border-top: 1px solid rgb(229 231 235);
+  padding-top: 1rem;
+}
+
+/* Quick signup option styling */
+.quick-signup-option {
+  background: linear-gradient(135deg, rgb(219 234 254) 0%, rgb(191 219 254) 100%);
+  border: 1px solid rgb(147 197 253);
 }
 `;
 

@@ -4,16 +4,15 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 /**
- * User Entity Class - Corrected Boolean Naming Conventions
- *
- * This class uses primitive boolean types with proper 'is' prefix getters
- * to match Java naming conventions and fix compilation errors.
+ * User Entity Class - Enhanced for Rental Management Platform
+ * Supports multi-role authentication with business information
  */
 @Entity
 @Table(name = "users", indexes = {
         @Index(name = "idx_email", columnList = "email"),
         @Index(name = "idx_verification_token", columnList = "verification_token"),
-        @Index(name = "idx_created_at", columnList = "created_at")
+        @Index(name = "idx_created_at", columnList = "created_at"),
+        @Index(name = "idx_user_role", columnList = "user_role")
 })
 public class User {
 
@@ -35,73 +34,69 @@ public class User {
     @Column(name = "last_name", nullable = false, length = 50)
     private String lastName;
 
-    // ✅ ACCOUNT STATUS FIELDS - Using primitive boolean with proper naming
+    // ✅ USER ROLE FOR RENTAL MANAGEMENT
+    @Enumerated(EnumType.STRING)
+    @Column(name = "user_role", nullable = false)
+    private UserRole userRole = UserRole.CUSTOMER;
+
+    // ✅ LOCATION FIELD (matches frontend)
+    @Column(nullable = false, length = 255)
+    private String location;
+
+    // ✅ BUSINESS INFORMATION (for property owners)
+    @Column(name = "business_name", length = 100)
+    private String businessName;
+
+    @Column(name = "business_license", length = 50)
+    private String businessLicense;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "business_type")
+    private BusinessType businessType;
+
+    // ✅ ACCOUNT STATUS FIELDS
     @Column(nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
     private boolean enabled = false;
 
     @Column(name = "email_verified", nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
     private boolean emailVerified = false;
 
-    @Column(name = "is_profile_public", nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
-    private boolean isProfilePublic = false;
-
     @Column(nullable = false, columnDefinition = "TINYINT(1) DEFAULT 1")
     private boolean active = true;
 
-    // ✅ PRIVACY & NOTIFICATION PREFERENCES - Using primitive boolean
-    @Column(name = "receive_notifications", nullable = false, columnDefinition = "BIT DEFAULT 1")
-    private boolean receiveNotifications = true;
-
-    @Column(name = "show_email", nullable = false, columnDefinition = "BIT DEFAULT 0")
-    private boolean showEmail = false;
-
-    @Column(name = "show_location", nullable = false, columnDefinition = "BIT DEFAULT 0")
-    private boolean showLocation = false;
-
-    // ✅ PROFILE VISIBILITY ENUM
-    @Enumerated(EnumType.STRING)
-    @Column(name = "profile_visibility")
-    private ProfileVisibility profileVisibility;
-
     // ✅ PROFILE INFORMATION
-    @Column(length = 1000)
-    private String bio;
+    @Column(length = 15)
+    private String phoneNumber;
 
-    @Column(length = 100)
-    private String location;
+    // ✅ ADD THIS FIELD
+    @Column(name = "is_profile_public", nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
+    private boolean isProfilePublic = false;
 
-    @Column(length = 100)
-    private String company;
+    // ✅ ADD THESE METHODS
+    public boolean isProfilePublic() {
+        return isProfilePublic;
+    }
 
-    @Column(length = 100)
-    private String profession;
+    public void setProfilePublic(boolean profilePublic) {
+        this.isProfilePublic = profilePublic;
+    }
 
-    @Column(name = "availability", length = 500)
-    private String availability;
-
-    @Column(name = "social_links", length = 500)
-    private String socialLinks;
-
-    // ✅ PROFILE PHOTOS
-    @Column(name = "profile_photo", length = 500)
-    private String profilePhoto;
 
     @Column(name = "profile_photo_url", length = 500)
     private String profilePhotoUrl;
 
-    // ✅ RATING AND REVIEW SYSTEM
-    @Column(name = "average_rating")
-    private Double averageRating;
+    @Column(length = 1000)
+    private String bio;
 
-    @Column(name = "total_reviews")
-    private Integer totalReviews;
+    // ✅ RATING SYSTEM (for rental platform)
+    @Column(name = "average_rating", precision = 3, scale = 2)
+    private Double averageRating = 0.0;
 
-    // ✅ ACTIVITY TRACKING
-    @Column(name = "completed_swaps", nullable = false, columnDefinition = "INT DEFAULT 0")
-    private Integer completedSwaps = 0;
+    @Column(name = "total_reviews", nullable = false)
+    private Integer totalReviews = 0;
 
-    @Column(name = "profile_completed_at")
-    private LocalDateTime profileCompletedAt;
+    @Column(name = "total_rentals", nullable = false)
+    private Integer totalRentals = 0;
 
     // ✅ EMAIL VERIFICATION FIELDS
     @Column(name = "verification_token", length = 255)
@@ -110,6 +105,16 @@ public class User {
     @Column(name = "token_expiration")
     private LocalDateTime tokenExpiration;
 
+    // ✅ SECURITY FIELDS
+    @Column(name = "login_attempts", nullable = false)
+    private Integer loginAttempts = 0;
+
+    @Column(name = "lockout_time")
+    private LocalDateTime lockoutTime;
+
+    @Column(name = "last_login_time")
+    private LocalDateTime lastLoginTime;
+
     // ✅ AUDIT FIELDS
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -117,9 +122,13 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // ✅ ENUM FOR PROFILE VISIBILITY
-    public enum ProfileVisibility {
-        LIMITED, PRIVATE, PUBLIC
+    // ✅ ENUMS FOR RENTAL MANAGEMENT
+    public enum UserRole {
+        CUSTOMER, OWNER, BUSINESS, ADMIN, SUPER_ADMIN
+    }
+
+    public enum BusinessType {
+        EQUIPMENT_RENTAL, PROPERTY_RENTAL, VEHICLE_RENTAL, INDIVIDUAL
     }
 
     // ✅ CONSTRUCTORS
@@ -127,257 +136,104 @@ public class User {
         // Default constructor required by JPA
     }
 
-    public User(String email, String password, String firstName, String lastName) {
+    public User(String email, String password, String firstName, String lastName,
+                UserRole userRole, String location) {
         this.email = email;
         this.password = password;
         this.firstName = firstName;
         this.lastName = lastName;
-        // Set default values explicitly
+        this.userRole = userRole != null ? userRole : UserRole.CUSTOMER;
+        this.location = location;
+
+        // Set default values
         this.enabled = false;
         this.emailVerified = false;
         this.active = true;
-        this.receiveNotifications = true;
-        this.showEmail = false;
-        this.showLocation = false;
-        this.isProfilePublic = false;
-        this.completedSwaps = 0;
-        this.profileVisibility = ProfileVisibility.PRIVATE;
+        this.loginAttempts = 0;
+        this.totalReviews = 0;
+        this.totalRentals = 0;
+        this.averageRating = 0.0;
     }
 
-    // ✅ GETTERS AND SETTERS - CORRECT BOOLEAN NAMING CONVENTIONS
+    // ✅ GETTERS AND SETTERS
 
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    public String getEmail() {
-        return email;
-    }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
 
-    public String getPassword() {
-        return password;
-    }
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
+    public UserRole getUserRole() { return userRole; }
+    public void setUserRole(UserRole userRole) { this.userRole = userRole; }
 
-    public String getFirstName() {
-        return firstName;
-    }
+    public String getLocation() { return location; }
+    public void setLocation(String location) { this.location = location; }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
+    public String getBusinessName() { return businessName; }
+    public void setBusinessName(String businessName) { this.businessName = businessName; }
 
-    public String getLastName() {
-        return lastName;
-    }
+    public String getBusinessLicense() { return businessLicense; }
+    public void setBusinessLicense(String businessLicense) { this.businessLicense = businessLicense; }
 
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
+    public BusinessType getBusinessType() { return businessType; }
+    public void setBusinessType(BusinessType businessType) { this.businessType = businessType; }
 
-    // ✅ CORRECT boolean getters with 'is' prefix
-    public boolean isEnabled() {
-        return enabled;
-    }
+    public boolean isEnabled() { return enabled; }
+    public void setEnabled(boolean enabled) { this.enabled = enabled; }
 
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
+    public boolean isEmailVerified() { return emailVerified; }
+    public void setEmailVerified(boolean emailVerified) { this.emailVerified = emailVerified; }
 
-    public boolean isEmailVerified() {
-        return emailVerified;
-    }
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
 
-    public void setEmailVerified(boolean emailVerified) {
-        this.emailVerified = emailVerified;
-    }
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
 
-    public boolean isActive() {
-        return active;
-    }
+    public String getProfilePhotoUrl() { return profilePhotoUrl; }
+    public void setProfilePhotoUrl(String profilePhotoUrl) { this.profilePhotoUrl = profilePhotoUrl; }
 
-    public void setActive(boolean active) {
-        this.active = active;
-    }
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
 
-    public boolean isReceiveNotifications() {
-        return receiveNotifications;
-    }
+    public Double getAverageRating() { return averageRating; }
+    public void setAverageRating(Double averageRating) { this.averageRating = averageRating; }
 
-    public void setReceiveNotifications(boolean receiveNotifications) {
-        this.receiveNotifications = receiveNotifications;
-    }
+    public Integer getTotalReviews() { return totalReviews; }
+    public void setTotalReviews(Integer totalReviews) { this.totalReviews = totalReviews; }
 
-    public boolean isShowEmail() {
-        return showEmail;
-    }
+    public Integer getTotalRentals() { return totalRentals; }
+    public void setTotalRentals(Integer totalRentals) { this.totalRentals = totalRentals; }
 
-    public void setShowEmail(boolean showEmail) {
-        this.showEmail = showEmail;
-    }
+    public String getVerificationToken() { return verificationToken; }
+    public void setVerificationToken(String verificationToken) { this.verificationToken = verificationToken; }
 
-    public boolean isShowLocation() {
-        return showLocation;
-    }
+    public LocalDateTime getTokenExpiration() { return tokenExpiration; }
+    public void setTokenExpiration(LocalDateTime tokenExpiration) { this.tokenExpiration = tokenExpiration; }
 
-    public void setShowLocation(boolean showLocation) {
-        this.showLocation = showLocation;
-    }
+    public Integer getLoginAttempts() { return loginAttempts; }
+    public void setLoginAttempts(Integer loginAttempts) { this.loginAttempts = loginAttempts; }
 
-    public boolean isProfilePublic() {
-        return isProfilePublic;
-    }
+    public LocalDateTime getLockoutTime() { return lockoutTime; }
+    public void setLockoutTime(LocalDateTime lockoutTime) { this.lockoutTime = lockoutTime; }
 
-    public void setProfilePublic(boolean profilePublic) {
-        isProfilePublic = profilePublic;
-    }
+    public LocalDateTime getLastLoginTime() { return lastLoginTime; }
+    public void setLastLoginTime(LocalDateTime lastLoginTime) { this.lastLoginTime = lastLoginTime; }
 
-    public ProfileVisibility getProfileVisibility() {
-        return profileVisibility;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public void setProfileVisibility(ProfileVisibility profileVisibility) {
-        this.profileVisibility = profileVisibility;
-    }
-
-    public String getBio() {
-        return bio;
-    }
-
-    public void setBio(String bio) {
-        this.bio = bio;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
-    public String getCompany() {
-        return company;
-    }
-
-    public void setCompany(String company) {
-        this.company = company;
-    }
-
-    public String getProfession() {
-        return profession;
-    }
-
-    public void setProfession(String profession) {
-        this.profession = profession;
-    }
-
-    public String getAvailability() {
-        return availability;
-    }
-
-    public void setAvailability(String availability) {
-        this.availability = availability;
-    }
-
-    public String getSocialLinks() {
-        return socialLinks;
-    }
-
-    public void setSocialLinks(String socialLinks) {
-        this.socialLinks = socialLinks;
-    }
-
-    public String getProfilePhoto() {
-        return profilePhoto;
-    }
-
-    public void setProfilePhoto(String profilePhoto) {
-        this.profilePhoto = profilePhoto;
-    }
-
-    public String getProfilePhotoUrl() {
-        return profilePhotoUrl;
-    }
-
-    public void setProfilePhotoUrl(String profilePhotoUrl) {
-        this.profilePhotoUrl = profilePhotoUrl;
-    }
-
-    public Double getAverageRating() {
-        return averageRating;
-    }
-
-    public void setAverageRating(Double averageRating) {
-        this.averageRating = averageRating;
-    }
-
-    public Integer getTotalReviews() {
-        return totalReviews;
-    }
-
-    public void setTotalReviews(Integer totalReviews) {
-        this.totalReviews = totalReviews;
-    }
-
-    public Integer getCompletedSwaps() {
-        return completedSwaps;
-    }
-
-    public void setCompletedSwaps(Integer completedSwaps) {
-        this.completedSwaps = completedSwaps;
-    }
-
-    public LocalDateTime getProfileCompletedAt() {
-        return profileCompletedAt;
-    }
-
-    public void setProfileCompletedAt(LocalDateTime profileCompletedAt) {
-        this.profileCompletedAt = profileCompletedAt;
-    }
-
-    public String getVerificationToken() {
-        return verificationToken;
-    }
-
-    public void setVerificationToken(String verificationToken) {
-        this.verificationToken = verificationToken;
-    }
-
-    public LocalDateTime getTokenExpiration() {
-        return tokenExpiration;
-    }
-
-    public void setTokenExpiration(LocalDateTime tokenExpiration) {
-        this.tokenExpiration = tokenExpiration;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
     // ✅ JPA LIFECYCLE CALLBACKS
     @PrePersist
@@ -386,12 +242,21 @@ public class User {
         this.createdAt = now;
         this.updatedAt = now;
 
-        // Set default values for required fields if not set
-        if (this.completedSwaps == null) {
-            this.completedSwaps = 0;
+        // Set default values if not set
+        if (this.userRole == null) {
+            this.userRole = UserRole.CUSTOMER;
         }
-        if (this.profileVisibility == null) {
-            this.profileVisibility = ProfileVisibility.PRIVATE;
+        if (this.totalReviews == null) {
+            this.totalReviews = 0;
+        }
+        if (this.totalRentals == null) {
+            this.totalRentals = 0;
+        }
+        if (this.averageRating == null) {
+            this.averageRating = 0.0;
+        }
+        if (this.loginAttempts == null) {
+            this.loginAttempts = 0;
         }
     }
 
@@ -400,7 +265,7 @@ public class User {
         this.updatedAt = LocalDateTime.now();
     }
 
-    // ✅ UTILITY METHODS
+    // ✅ UTILITY METHODS FOR RENTAL MANAGEMENT
     public String getFullName() {
         return firstName + " " + lastName;
     }
@@ -409,57 +274,52 @@ public class User {
         return tokenExpiration != null && LocalDateTime.now().isAfter(tokenExpiration);
     }
 
-    // ✅ ENHANCED CONVENIENCE METHODS
     public boolean isFullyActivated() {
         return enabled && emailVerified && active;
-    }
-
-    public boolean canReceiveEmails() {
-        return receiveNotifications && active;
-    }
-
-    public boolean isEmailVisibleInProfile() {
-        return showEmail && (isProfilePublic || profileVisibility == ProfileVisibility.PUBLIC);
-    }
-
-    public boolean isLocationVisibleInProfile() {
-        return showLocation && (isProfilePublic || profileVisibility == ProfileVisibility.PUBLIC);
-    }
-
-    public String getDisplayName() {
-        if (lastName != null && !lastName.isEmpty()) {
-            return firstName + " " + lastName.charAt(0) + ".";
-        }
-        return firstName;
     }
 
     public boolean hasValidToken() {
         return verificationToken != null && !isTokenExpired();
     }
 
-    public String getContactEmail() {
-        return showEmail ? email : null;
+    public boolean isBusinessUser() {
+        return userRole == UserRole.OWNER || userRole == UserRole.BUSINESS;
     }
 
-    public String getPublicLocation() {
-        return showLocation ? location : null;
+    public boolean isCustomer() {
+        return userRole == UserRole.CUSTOMER;
     }
 
-    public boolean isProfileComplete() {
-        return profileCompletedAt != null;
+    public boolean isAdmin() {
+        return userRole == UserRole.ADMIN || userRole == UserRole.SUPER_ADMIN;
     }
 
-    public void markProfileComplete() {
-        this.profileCompletedAt = LocalDateTime.now();
+    public boolean hasBusinessInfo() {
+        return businessName != null && !businessName.trim().isEmpty();
     }
 
-    public boolean hasProfilePhoto() {
-        return (profilePhoto != null && !profilePhoto.trim().isEmpty()) ||
-                (profilePhotoUrl != null && !profilePhotoUrl.trim().isEmpty());
+    public boolean isAccountLocked() {
+        return lockoutTime != null && LocalDateTime.now().isBefore(lockoutTime);
     }
 
-    public String getProfileImageUrl() {
-        return profilePhotoUrl != null ? profilePhotoUrl : profilePhoto;
+    public void incrementLoginAttempts() {
+        this.loginAttempts = (this.loginAttempts == null ? 0 : this.loginAttempts) + 1;
+    }
+
+    public void resetLoginAttempts() {
+        this.loginAttempts = 0;
+        this.lockoutTime = null;
+    }
+
+    public void lockAccount(int minutesToLock) {
+        this.lockoutTime = LocalDateTime.now().plusMinutes(minutesToLock);
+    }
+
+    public String getDisplayName() {
+        if (businessName != null && !businessName.trim().isEmpty()) {
+            return businessName;
+        }
+        return getFullName();
     }
 
     public boolean hasGoodRating() {
@@ -467,10 +327,14 @@ public class User {
     }
 
     public boolean isExperiencedUser() {
-        return completedSwaps != null && completedSwaps >= 5;
+        return totalRentals != null && totalRentals >= 5;
     }
 
-    // ✅ toString for debugging (exclude password and sensitive info)
+    public void updateLastLogin() {
+        this.lastLoginTime = LocalDateTime.now();
+    }
+
+    // ✅ toString for debugging (exclude sensitive info)
     @Override
     public String toString() {
         return "User{" +
@@ -478,14 +342,14 @@ public class User {
                 ", email='" + email + '\'' +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
+                ", userRole=" + userRole +
+                ", location='" + location + '\'' +
+                ", businessName='" + businessName + '\'' +
                 ", enabled=" + enabled +
                 ", emailVerified=" + emailVerified +
                 ", active=" + active +
-                ", company='" + company + '\'' +
-                ", profession='" + profession + '\'' +
-                ", profileVisibility=" + profileVisibility +
+                ", totalRentals=" + totalRentals +
                 ", averageRating=" + averageRating +
-                ", completedSwaps=" + completedSwaps +
                 ", createdAt=" + createdAt +
                 '}';
     }

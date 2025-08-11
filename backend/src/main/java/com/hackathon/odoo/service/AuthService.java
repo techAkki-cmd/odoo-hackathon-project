@@ -16,9 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
-import java.util.Optional;
-import java.util.List;
+import java.util.*;
 
 /**
  * AuthService - Complete Authentication & User Management Service
@@ -64,6 +62,7 @@ public class AuthService {
     private int passwordResetExpirationHours;
 
     // ✅ USER REGISTRATION - Enhanced with EmailService integration
+    // ✅ ENHANCED USER REGISTRATION - Updated for Rental Management Platform
     public User register(RegisterRequest request) {
         System.out.println("🚀 Registration service called for email: " + request.getEmail());
 
@@ -73,17 +72,27 @@ public class AuthService {
             throw new UserAlreadyExistsException("Email already registered: " + request.getEmail());
         }
 
-        // 2. Create new user with ALL required fields set explicitly
+        // 2. Create new user with ALL required fields including rental management fields
         User user = new User();
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setEmail(request.getEmail().toLowerCase()); // Ensure lowercase
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
+        // ✅ NEW: Set rental management specific fields
+        user.setUserRole(request.getUserRole() != null ? request.getUserRole() : User.UserRole.CUSTOMER);
+        user.setLocation(request.getLocation()); // Required field from frontend
+
+        // ✅ NEW: Set business information (for property owners)
+        if (user.isBusinessUser() && request.getBusinessName() != null) {
+            user.setBusinessName(request.getBusinessName());
+            user.setBusinessLicense(request.getBusinessLicense());
+            user.setBusinessType(request.getBusinessType());
+        }
+
         // 3. Set boolean fields explicitly to prevent database errors
         user.setEnabled(false);           // Account disabled until email verification
         user.setEmailVerified(false);     // Email not verified yet
-        user.setProfilePublic(false);     // Profile private by default
         user.setActive(true);            // Account is active (not deleted)
 
         // 4. Generate and set verification token
@@ -94,9 +103,11 @@ public class AuthService {
         try {
             // 5. Save user to database
             User savedUser = userRepository.save(user);
-            System.out.println("✅ User saved successfully with ID: " + savedUser.getId());
+            System.out.println("✅ User saved successfully with ID: " + savedUser.getId() +
+                    ", Role: " + savedUser.getUserRole() +
+                    ", Location: " + savedUser.getLocation());
 
-            // 6. Send verification email using EmailService
+            // 6. Send role-specific verification email using EmailService
             emailService.sendVerificationEmail(savedUser);
 
             return savedUser;
@@ -106,6 +117,7 @@ public class AuthService {
             throw new RuntimeException("Registration failed: " + e.getMessage(), e);
         }
     }
+
 
     // ✅ USER AUTHENTICATION - Enhanced with comprehensive security checks
     public User authenticate(String email, String password) {
@@ -148,6 +160,78 @@ public class AuthService {
         System.out.println("✅ Authentication successful for user ID: " + user.getId());
         return user;
     }
+
+    // ✅ ENHANCED AUTHENTICATION WITH ROLE-BASED RESPONSE
+    public AuthenticationResult authenticateWithRole(String email, String password) {
+        System.out.println("🔐 Role-based authentication attempt for email: " + email);
+
+        // Use existing authenticate method for validation
+        User user = authenticate(email, password);
+
+        // Update last login time
+        user.updateLastLogin();
+        user.resetLoginAttempts(); // Reset failed attempts on successful login
+        userRepository.save(user);
+
+        // Create authentication result with role information
+        return new AuthenticationResult(
+                user,
+                user.getUserRole(),
+                user.getLocation(),
+                user.isBusinessUser(),
+                user.hasBusinessInfo(),
+                generateSessionData(user)
+        );
+    }
+
+    // Helper method for session data
+    private SessionData generateSessionData(User user) {
+        return new SessionData(
+                generateSecureToken(), // Session ID
+                generateSecureToken(), // Refresh token
+                LocalDateTime.now().plusHours(24) // 24 hour session
+        );
+    }
+
+    // ✅ SECURITY: Handle failed login attempts
+    public void handleFailedLogin(String email) {
+        Optional<User> userOpt = userRepository.findByEmailIgnoreCase(email);
+
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            user.incrementLoginAttempts();
+
+            // Lock account after 5 failed attempts
+            if (user.getLoginAttempts() >= 5) {
+                user.lockAccount(15); // Lock for 15 minutes
+                System.out.println("🔒 Account locked due to failed attempts: " + email);
+            }
+
+            userRepository.save(user);
+        }
+    }
+
+    // ✅ CHECK: Account lockout status
+    public void checkAccountLockout(String email) {
+        Optional<User> userOpt = userRepository.findByEmailIgnoreCase(email);
+
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+
+            if (user.isAccountLocked()) {
+                long minutesRemaining = java.time.Duration.between(
+                        LocalDateTime.now(),
+                        user.getLockoutTime()
+                ).toMinutes();
+
+                throw new RuntimeException(
+                        "Account temporarily locked. Try again in " + minutesRemaining + " minutes."
+                );
+            }
+        }
+    }
+
+
 
     // ✅ EMAIL VERIFICATION - Enhanced with proper exception handling
     public boolean verifyEmail(String token) {
@@ -434,6 +518,54 @@ public class AuthService {
         }
     }
 
+    // ✅ RENTAL MANAGEMENT: Get users by role
+    public List<User> getUsersByRole(User.UserRole role) {
+        return userRepository.findByUserRole(role);
+    }
+
+    // ✅ RENTAL MANAGEMENT: Get business users in location
+    public List<User> getBusinessUsersInLocation(String location) {
+        return userRepository.findBusinessUsersInLocation(location);
+    }
+
+    // ✅ RENTAL MANAGEMENT: Get customers in location
+    public List<User> getCustomersInLocation(String location) {
+        return userRepository.findCustomersInLocation(location);
+    }
+
+    // ✅ RENTAL MANAGEMENT: Get users by role and location
+    public List<User> getUsersByRoleAndLocation(User.UserRole role, String location) {
+        return userRepository.findByUserRoleAndLocation(role, location);
+    }
+
+    // ✅ ANALYTICS: Get role distribution statistics
+    public Map<String, Long> getRoleDistribution() {
+        List<Object[]> roleStats = userRepository.getUserRoleDistribution();
+        Map<String, Long> distribution = new HashMap<>();
+
+        for (Object[] stat : roleStats) {
+            distribution.put((String) stat[0], ((Number) stat[1]).longValue());
+        }
+
+        return distribution;
+    }
+
+    // ✅ ANALYTICS: Get business user statistics
+    public BusinessUserStats getBusinessUserStatistics() {
+        Object[] stats = userRepository.getBusinessUserStatistics();
+
+        if (stats != null && stats.length >= 3) {
+            return new BusinessUserStats(
+                    ((Number) stats[0]).longValue(), // total business users
+                    ((Number) stats[1]).longValue(), // owners count
+                    ((Number) stats[2]).longValue()  // businesses count
+            );
+        }
+
+        return new BusinessUserStats(0L, 0L, 0L);
+    }
+
+
     /**
      * Reactivate user account
      */
@@ -526,5 +658,77 @@ public class AuthService {
                     ", activeUserRate=" + String.format("%.2f%%", getActiveUserRate()) +
                     '}';
         }
+
+
     }
+    // ✅ AUTHENTICATION RESULT CLASS
+    public static class AuthenticationResult {
+        private final User user;
+        private final User.UserRole role;
+        private final String location;
+        private final boolean isBusinessUser;
+        private final boolean hasBusinessInfo;
+        private final SessionData sessionData;
+
+        public AuthenticationResult(User user, User.UserRole role, String location,
+                                    boolean isBusinessUser, boolean hasBusinessInfo,
+                                    SessionData sessionData) {
+            this.user = user;
+            this.role = role;
+            this.location = location;
+            this.isBusinessUser = isBusinessUser;
+            this.hasBusinessInfo = hasBusinessInfo;
+            this.sessionData = sessionData;
+        }
+
+        // Getters
+        public User getUser() { return user; }
+        public User.UserRole getRole() { return role; }
+        public String getLocation() { return location; }
+        public boolean isBusinessUser() { return isBusinessUser; }
+        public boolean hasBusinessInfo() { return hasBusinessInfo; }
+        public SessionData getSessionData() { return sessionData; }
+    }
+
+    // ✅ SESSION DATA CLASS
+    public static class SessionData {
+        private final String sessionId;
+        private final String refreshToken;
+        private final LocalDateTime expiresAt;
+
+        public SessionData(String sessionId, String refreshToken, LocalDateTime expiresAt) {
+            this.sessionId = sessionId;
+            this.refreshToken = refreshToken;
+            this.expiresAt = expiresAt;
+        }
+
+        // Getters
+        public String getSessionId() { return sessionId; }
+        public String getRefreshToken() { return refreshToken; }
+        public LocalDateTime getExpiresAt() { return expiresAt; }
+    }
+
+    // ✅ BUSINESS USER STATISTICS CLASS
+    public static class BusinessUserStats {
+        private final long totalBusinessUsers;
+        private final long ownersCount;
+        private final long businessesCount;
+
+        public BusinessUserStats(long totalBusinessUsers, long ownersCount, long businessesCount) {
+            this.totalBusinessUsers = totalBusinessUsers;
+            this.ownersCount = ownersCount;
+            this.businessesCount = businessesCount;
+        }
+
+        // Getters
+        public long getTotalBusinessUsers() { return totalBusinessUsers; }
+        public long getOwnersCount() { return ownersCount; }
+        public long getBusinessesCount() { return businessesCount; }
+
+        public double getOwnerPercentage() {
+            return totalBusinessUsers > 0 ? (double) ownersCount / totalBusinessUsers * 100.0 : 0.0;
+        }
+    }
+
 }
+
