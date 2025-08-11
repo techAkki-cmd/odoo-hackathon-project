@@ -1,8 +1,9 @@
-// src/app.js - Main Application Controller
-// 🏆 Complete Modular OdooHackathonApp Class - All Functionality Preserved
+// src/app.js - Complete Application Controller with Landing Integration
+// 🏆 Enhanced OdooHackathonApp Class - Perfect RentHub Integration
 
 import { renderLoginPage, attachLoginEventListeners } from './pages/login.js';
 import { renderSignupPage, attachSignupEventListeners } from './pages/signup.js';
+import { renderLandingPage, attachLandingListeners } from './pages/landing.js';
 import { authService } from './api/authService.js';
 import { renderEmailVerification, attachEmailVerificationListeners } from './pages/verification.js';
 import { NotificationManager } from './utils/notifications.js';
@@ -13,7 +14,7 @@ import { utils, CONFIG, icons, createFloatingElements } from './utils/common.js'
 // 🎨 Advanced Application State Management
 class AppState {
     constructor() {
-        this.currentView = 'login';
+        this.currentView = 'landing'; // ✅ Start with landing page
         this.previousView = null;
         this.isTransitioning = false;
         this.user = null;
@@ -22,6 +23,9 @@ class AppState {
         this.isOnline = navigator.onLine;
         this.lastActivity = Date.now();
         this.sessionTimeout = 30 * 60 * 1000; // 30 minutes
+        this.products = []; // ✅ Added for product management
+        this.platformStats = null; // ✅ Added for landing page stats
+        this.showDashboard = false;
     }
 
     setState(newState) {
@@ -34,9 +38,15 @@ class AppState {
         const stateToSave = {
             theme: this.theme,
             lastActivity: this.lastActivity,
-            user: this.user
+            user: this.user,
+            products: this.products,
+            showDashboard: this.showDashboard
         };
-        localStorage.setItem('appState', JSON.stringify(stateToSave));
+        try {
+            localStorage.setItem('appState', JSON.stringify(stateToSave));
+        } catch (error) {
+            console.error('Failed to save app state:', error);
+        }
     }
 
     loadFromStorage() {
@@ -51,9 +61,19 @@ class AppState {
     notifyStateChange() {
         window.dispatchEvent(new CustomEvent('appStateChange', { detail: this }));
     }
+
+    reset() {
+        this.currentView = 'landing';
+        this.previousView = null;
+        this.isTransitioning = false;
+        this.user = null;
+        this.notifications = [];
+        this.showDashboard = false;
+        this.saveToStorage();
+    }
 }
 
-// 🏆 MAIN APPLICATION CLASS - ALL YOUR FUNCTIONALITY PRESERVED
+// 🏆 MAIN APPLICATION CLASS - ENHANCED WITH LANDING INTEGRATION
 export class OdooHackathonApp {
     constructor() {
         // Core services
@@ -65,19 +85,35 @@ export class OdooHackathonApp {
         this.analytics = new AnalyticsManager();
         this.sessionTimeoutId = null;
 
+        // ✅ Added API endpoints
+        this.apiEndpoints = {
+            products: 'http://localhost:8080/api/products',
+            auth: 'http://localhost:8080/api/auth'
+        };
+
         // Initialize core systems
         this.setupRoutes();
         this.setupEventListeners();
         this.initializeApp();
     }
 
-    // 🗺️ Advanced Routing System - COMPLETE
+    // 🗺️ Enhanced Routing System with Landing Integration
     setupRoutes() {
+        // ✅ Landing Page Route (Entry Point)
+        this.routes.set('landing', {
+            component: renderLandingPage,
+            attachListeners: attachLandingListeners,
+            title: 'RentHub - Your Ultimate Rental Platform',
+            description: 'Discover and rent amazing products from vehicles to electronics',
+            requiresAuth: false,
+            animation: 'fadeIn'
+        });
+
         this.routes.set('login', {
             component: renderLoginPage,
             attachListeners: attachLoginEventListeners,
-            title: 'Sign In - Odoo Hackathon',
-            description: 'Sign in to your Odoo Hackathon account',
+            title: 'Sign In - RentHub',
+            description: 'Sign in to your RentHub account',
             requiresAuth: false,
             animation: 'slideInRight'
         });
@@ -85,8 +121,8 @@ export class OdooHackathonApp {
         this.routes.set('signup', {
             component: renderSignupPage,
             attachListeners: attachSignupEventListeners,
-            title: 'Join the Revolution - Odoo Hackathon',
-            description: 'Create your account and start building amazing things',
+            title: 'Join RentHub - Start Renting Today',
+            description: 'Create your account and start renting',
             requiresAuth: false,
             animation: 'slideInLeft'
         });
@@ -94,7 +130,7 @@ export class OdooHackathonApp {
         this.routes.set('verify-email', {
             component: () => renderEmailVerification(),
             attachListeners: () => attachEmailVerificationListeners(),
-            title: 'Verify Email - Odoo Hackathon',
+            title: 'Verify Email - RentHub',
             description: 'Verifying your email address',
             requiresAuth: false,
             animation: 'fadeIn'
@@ -103,25 +139,30 @@ export class OdooHackathonApp {
         this.routes.set('verification-success', {
             component: () => this.renderVerificationSuccess(),
             attachListeners: () => this.attachVerificationListeners(),
-            title: 'Account Verified - Odoo Hackathon',
+            title: 'Account Verified - RentHub',
             description: 'Your account has been successfully verified',
             requiresAuth: false,
             animation: 'bounceIn'
         });
 
-        this.routes.set('dashboard', {
+        // Dashboard Routes (All aliases)
+        const dashboardConfig = {
             component: () => this.renderDashboard(),
             attachListeners: () => this.attachDashboardListeners(),
-            title: 'Dashboard - Odoo Hackathon',
-            description: 'Your hackathon control center',
+            title: 'Dashboard - RentHub',
+            description: 'Your rental management dashboard',
             requiresAuth: true,
             animation: 'fadeIn'
+        };
+
+        ['dashboard', 'customer-dashboard', 'buyer-dashboard'].forEach(route => {
+            this.routes.set(route, dashboardConfig);
         });
 
         this.routes.set('profile', {
             component: () => this.renderProfile(),
             attachListeners: () => this.attachProfileListeners(),
-            title: 'Profile Settings - Odoo Hackathon',
+            title: 'Profile Settings - RentHub',
             description: 'Manage your account settings',
             requiresAuth: true,
             animation: 'slideInUp'
@@ -130,34 +171,105 @@ export class OdooHackathonApp {
         this.routes.set('loading', {
             component: () => this.renderLoadingScreen(),
             attachListeners: () => {},
-            title: 'Loading - Odoo Hackathon',
+            title: 'Loading - RentHub',
             description: 'Please wait...',
             requiresAuth: false,
             animation: 'fadeIn'
         });
     }
 
-    // 🎭 Advanced Animation Controller - COMPLETE
-    async navigate(viewName, options = {}) {
-        if (this.state.isTransitioning) return;
+    // 🎬 Enhanced Application Initialization
+    async initializeApp() {
+        utils.log('🚀 Initializing RentHub Application with Landing Integration');
 
-        utils.log(`🧭 Navigating to: ${viewName}`);
+        // Check for verification in URL first
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const path = window.location.pathname;
+
+        if (token && (path.includes('verify-email') || path.includes('verify'))) {
+            console.log('📧 Email verification detected, loading verification page');
+            this.navigate('verify-email');
+            return;
+        }
+
+        // Show loading screen briefly
+        this.navigate('loading');
+        this.injectPremiumLoadingStyles();
+        this.startPremiumLoadingExperience();
+
+        // Load saved state
+        this.state.loadFromStorage();
+
+        // Check authentication
+        const isAuthenticated = this.isAuthenticated();
+
+        // Enhanced loading simulation
+        await this.simulateLoadingProgress();
+
+        // ✅ Enhanced Navigation Logic
+        if (isAuthenticated) {
+            this.state.user = this.getCurrentUser();
+            this.state.setState({ showDashboard: true });
+            this.navigate('dashboard');
+        } else {
+            // Always start with landing page for unauthenticated users
+            this.navigate('landing');
+        }
+
+        // Initialize premium features
+        this.initializePremiumFeatures();
+
+        utils.log('✅ RentHub Application initialized successfully');
+    }
+
+    // 🎭 Enhanced Navigation with Landing Integration
+    async navigate(viewName, options = {}) {
+        if (this.state.isTransitioning) {
+            console.log('🚫 Navigation blocked: transition in progress');
+            return;
+        }
+
+        console.log(`🧭 Navigating to: ${viewName}`);
 
         const route = this.routes.get(viewName);
         if (!route) {
-            utils.error(`Route not found: ${viewName}`);
-            return this.navigate('login');
+            console.error(`❌ Route not found: ${viewName}`);
+            // Enhanced fallback logic
+            if (this.isAuthenticated()) {
+                console.log('🔄 Fallback: Redirecting authenticated user to dashboard');
+                return this.navigate('dashboard');
+            } else {
+                console.log('🔄 Fallback: Redirecting to landing');
+                return this.navigate('landing');
+            }
         }
 
-        // Authentication middleware
-        if (route.requiresAuth && !this.isAuthenticated()) {
-            utils.log('🔒 Authentication required, redirecting to login');
-            return this.navigate('login');
+        // Enhanced auth check
+        if (route.requiresAuth) {
+            const isAuth = this.isAuthenticated();
+            console.log(`🔒 Auth check for ${viewName}:`, isAuth);
+
+            if (!isAuth) {
+                console.log('🔒 Authentication required, redirecting to landing');
+                this.notifications.show('Please sign in to access this page', 'warning');
+                return this.navigate('landing');
+            }
         }
 
-        if (!route.requiresAuth && this.isAuthenticated() && viewName !== 'verification-success') {
-            utils.log('👤 User authenticated, redirecting to dashboard');
-            return this.navigate('dashboard');
+        // Auto-redirect authenticated users from public pages
+        if (!route.requiresAuth && this.isAuthenticated() &&
+            !['landing', 'verification-success'].includes(viewName)) {
+            console.log('👤 User authenticated, checking redirect');
+            if (viewName === 'login' || viewName === 'signup') {
+                return this.navigate('dashboard');
+            }
+        }
+
+        // Prevent infinite loops
+        if (this.state.currentView === viewName) {
+            console.log(`🔄 Already on ${viewName}, skipping navigation`);
+            return;
         }
 
         // Update state
@@ -179,7 +291,7 @@ export class OdooHackathonApp {
         this.state.setState({ isTransitioning: false });
     }
 
-    // 🎨 Premium Page Transition System - COMPLETE
+    // 🎨 Premium Page Transition System
     async performPageTransition(route, options) {
         const app = document.getElementById('app');
         const transitionDuration = options.fast ? 300 : 600;
@@ -208,7 +320,141 @@ export class OdooHackathonApp {
         this.initializeCurrentPage();
     }
 
-    // 🏆 ELITE PROFESSIONAL LOADING SCREEN - COMPLETE
+    // 📱 Update Document Metadata
+    updateDocumentMeta(route) {
+        document.title = route.title;
+        this.updateMetaTag('description', route.description);
+        this.updateMetaTag('og:title', route.title);
+        this.updateMetaTag('og:description', route.description);
+    }
+
+    updateMetaTag(name, content) {
+        let meta = document.querySelector(`meta[name="${name}"], meta[property="${name}"]`);
+        if (!meta) {
+            meta = document.createElement('meta');
+            if (name.startsWith('og:')) {
+                meta.setAttribute('property', name);
+            } else {
+                meta.setAttribute('name', name);
+            }
+            document.head.appendChild(meta);
+        }
+        meta.setAttribute('content', content);
+    }
+
+    // 🎯 Event Listeners Setup
+    setupEventListeners() {
+        // Navigation events
+        window.addEventListener('navigate', (event) => {
+            this.navigate(event.detail.view, event.detail.options);
+        });
+
+        // Online/Offline status
+        window.addEventListener('online', () => {
+            this.state.setState({ isOnline: true });
+            this.notifications.show('Connection restored', 'success');
+        });
+
+        window.addEventListener('offline', () => {
+            this.state.setState({ isOnline: false });
+            this.notifications.show('You are offline', 'warning');
+        });
+
+        // App state changes
+        window.addEventListener('appStateChange', (event) => {
+            this.handleStateChange(event.detail);
+        });
+    }
+
+    // 🔐 Enhanced Logout Handler
+    handleLogout() {
+        console.log('👋 User logging out');
+
+        // Clear all authentication data
+        const authKeys = [
+            'authToken', 'token', 'access_token', 'accessToken',
+            'refreshToken', 'refresh_token', 'user', 'userData'
+        ];
+
+        authKeys.forEach(key => {
+            localStorage.removeItem(key);
+            sessionStorage.removeItem(key);
+        });
+
+        // Call auth service logout if available
+        if (authService && typeof authService.logout === 'function') {
+            authService.logout();
+        }
+
+        this.state.setState({
+            user: null,
+            currentView: 'landing',
+            notifications: [],
+            showDashboard: false
+        });
+
+        if (this.sessionTimeoutId) {
+            clearTimeout(this.sessionTimeoutId);
+            this.sessionTimeoutId = null;
+        }
+
+        this.notifications.show('You have been logged out successfully', 'success');
+        this.navigate('landing');
+    }
+
+    // 🎯 Enhanced Global Event Listeners
+    attachGlobalListeners() {
+        try {
+            window.app = this;
+
+            // Navigation functions
+            window.handleLogout = () => this.handleLogout();
+            window.navigateToLanding = () => this.navigate('landing');
+            window.navigateToSignup = () => this.navigate('signup');
+            window.navigateToLogin = () => this.navigate('login');
+            window.navigateToDashboard = () => this.navigate('dashboard');
+
+            // Auth service integration
+            window.authService = authService;
+            window.performLogin = async (credentials) => await authService.login(credentials);
+            window.checkEmailAvailability = async (email) => await authService.checkEmailAvailability(email);
+
+            // API helpers
+            window.loadProducts = () => this.loadProductsFromAPI();
+            window.loadPlatformStats = () => this.loadPlatformStats();
+
+            window.resendVerification = async () => {
+                try {
+                    const email = prompt('Please enter your email address to resend verification:');
+                    if (!email) return;
+
+                    const response = await fetch(`${this.apiEndpoints.auth}/resend-verification`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: email.trim() })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.notifications.show('✅ Verification email sent! Please check your inbox.', 'success');
+                    } else {
+                        this.notifications.show('❌ Failed to send verification email: ' + data.message, 'error');
+                    }
+                } catch (error) {
+                    console.error('Resend verification error:', error);
+                    this.notifications.show('❌ Error: ' + error.message, 'error');
+                }
+            };
+
+            console.log('✅ Enhanced global listeners attached successfully');
+
+        } catch (error) {
+            console.error('❌ Failed to attach global listeners:', error);
+        }
+    }
+
+    // 🏆 ELITE PROFESSIONAL LOADING SCREEN
     renderLoadingScreen() {
         return `
             <div class="elite-loading-container">
@@ -223,15 +469,14 @@ export class OdooHackathonApp {
                             </div>
                         </div>
                         <div class="brand-identity">
-                            <h1 class="brand-name">Odoo Hackathon</h1>
-                            <span class="brand-descriptor">Enterprise Platform</span>
+                            <h1 class="brand-name">RentHub</h1>
+                            <span class="brand-descriptor">Rental Platform</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Elite Loading Core -->
                 <div class="loading-core">
-                    <!-- Real-time Progress System -->
                     <div class="progress-system">
                         <div class="progress-header">
                             <span id="system-status" class="system-status">Initializing secure environment...</span>
@@ -241,7 +486,6 @@ export class OdooHackathonApp {
                             </div>
                         </div>
 
-                        <!-- Advanced Progress Visualization -->
                         <div class="progress-track">
                             <div id="progress-fill" class="progress-fill">
                                 <div class="progress-gradient"></div>
@@ -249,7 +493,6 @@ export class OdooHackathonApp {
                             </div>
                         </div>
 
-                        <!-- System Initialization Steps -->
                         <div class="init-sequence">
                             <div class="init-step" id="step-security">
                                 <div class="step-status"></div>
@@ -273,78 +516,11 @@ export class OdooHackathonApp {
                             </div>
                         </div>
                     </div>
-
-                    <!-- Live Platform Preview -->
-                    <div class="platform-preview">
-                        <div class="preview-window">
-                            <div class="window-header">
-                                <div class="window-controls">
-                                    <div class="control-dot red"></div>
-                                    <div class="control-dot yellow"></div>
-                                    <div class="control-dot green"></div>
-                                </div>
-                                <span class="window-title">Platform Dashboard</span>
-                            </div>
-
-                            <div class="preview-content">
-                                <!-- Header Skeleton -->
-                                <div class="skeleton-header">
-                                    <div class="skeleton-nav-item"></div>
-                                    <div class="skeleton-nav-item"></div>
-                                    <div class="skeleton-nav-item"></div>
-                                    <div class="skeleton-profile"></div>
-                                </div>
-
-                                <!-- Content Skeleton -->
-                                <div class="skeleton-body">
-                                    <div class="skeleton-sidebar">
-                                        <div class="skeleton-menu-group">
-                                            <div class="skeleton-menu-item"></div>
-                                            <div class="skeleton-menu-item"></div>
-                                            <div class="skeleton-menu-item"></div>
-                                        </div>
-                                    </div>
-
-                                    <div class="skeleton-main">
-                                        <div class="skeleton-title-bar"></div>
-                                        <div class="skeleton-metrics">
-                                            <div class="skeleton-metric-card"></div>
-                                            <div class="skeleton-metric-card"></div>
-                                            <div class="skeleton-metric-card"></div>
-                                            <div class="skeleton-metric-card"></div>
-                                        </div>
-                                        <div class="skeleton-chart-area"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Platform Capabilities -->
-                        <div class="capabilities-showcase">
-                            <div class="capability-item">
-                                <div class="capability-icon">🔒</div>
-                                <span class="capability-text">Enterprise Security</span>
-                            </div>
-                            <div class="capability-item">
-                                <div class="capability-icon">⚡</div>
-                                <span class="capability-text">Real-time Collaboration</span>
-                            </div>
-                            <div class="capability-item">
-                                <div class="capability-icon">📊</div>
-                                <span class="capability-text">Advanced Analytics</span>
-                            </div>
-                            <div class="capability-item">
-                                <div class="capability-icon">🚀</div>
-                                <span class="capability-text">High Performance</span>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
-                <!-- Professional Footer -->
                 <div class="elite-footer">
                     <div class="system-info">
-                        <span id="loading-insight" class="loading-insight">Optimizing for your team's workflow patterns...</span>
+                        <span id="loading-insight" class="loading-insight">Optimizing for your rental experience...</span>
                     </div>
                     <div class="build-info">
                         <span class="build-version">v2.1.0</span>
@@ -356,153 +532,7 @@ export class OdooHackathonApp {
         `;
     }
 
-    // 📧 Email Verification Page Renderer - COMPLETE
-    renderEmailVerification() {
-        return `
-            <div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
-                ${createFloatingElements()}
-
-                <div class="w-full max-w-md relative z-10">
-                    <div class="bg-white/90 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/20">
-                        <div id="verification-content" class="text-center">
-                            <!-- Loading State -->
-                            <div id="verification-loading" class="mb-6">
-                                <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-                                    <div class="animate-spin w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full"></div>
-                                </div>
-                                <h2 class="text-2xl font-bold text-gray-900 mb-2">Verifying Your Email</h2>
-                                <p class="text-gray-600">Please wait while we verify your email address...</p>
-                            </div>
-
-                            <!-- Success State (hidden initially) -->
-                            <div id="verification-success" class="hidden mb-6">
-                                <div class="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-                                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                </div>
-                                <h2 class="text-2xl font-bold text-green-600 mb-2">Email Verified!</h2>
-                                <p class="text-gray-600">Your account has been successfully verified.</p>
-                            </div>
-
-                            <!-- Error State (hidden initially) -->
-                            <div id="verification-error" class="hidden mb-6">
-                                <div class="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
-                                    <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                    </svg>
-                                </div>
-                                <h2 class="text-2xl font-bold text-red-600 mb-2">Verification Failed</h2>
-                                <p id="error-message" class="text-gray-600 mb-4">Sorry, we couldn't verify your email address.</p>
-                            </div>
-
-                            <!-- Action Buttons -->
-                            <div id="verification-actions" class="hidden space-y-3">
-                                <button
-                                    onclick="app.navigate('login')"
-                                    class="w-full bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300">
-                                    Continue to Login
-                                </button>
-
-                                <button
-                                    id="resend-verification-btn"
-                                    onclick="resendVerification()"
-                                    class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-3 px-6 rounded-xl transition-all duration-300">
-                                    Resend Verification Email
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    // 🎯 Email Verification Event Listeners - COMPLETE
-    attachEmailVerificationListeners() {
-        console.log('📧 Attaching email verification listeners');
-
-        // Get token from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const token = urlParams.get('token');
-
-        if (!token) {
-            this.showVerificationError('No verification token found in URL. Please check your email link.');
-            return;
-        }
-
-        // Start verification process
-        this.processEmailVerification(token);
-    }
-
-    // 🔧 Process Email Verification - COMPLETE
-    async processEmailVerification(token) {
-        console.log('🔍 Processing email verification with token:', token.substring(0, 8) + '...');
-
-        try {
-            const response = await fetch(`http://localhost:8080/api/auth/verify-email?token=${encodeURIComponent(token)}`, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            console.log('📊 Verification response status:', response.status);
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-                console.error('❌ Backend error details:', errorData);
-                throw new Error(`Verification failed: ${errorData.message || 'HTTP ' + response.status}`);
-            }
-
-            const data = await response.json();
-            console.log('✅ Verification response:', data);
-
-            if (data.success) {
-                this.showVerificationSuccess();
-                window.history.replaceState({}, document.title, window.location.pathname);
-                setTimeout(() => {
-                    this.navigate('verification-success');
-                }, 2000);
-            } else {
-                this.showVerificationError(data.message || 'Email verification failed');
-            }
-
-        } catch (error) {
-            console.error('❌ Verification error:', error);
-            this.showVerificationError(error.message);
-        }
-    }
-
-    // 🎯 Show Verification States - COMPLETE
-    showVerificationSuccess() {
-        const loadingEl = document.getElementById('verification-loading');
-        const errorEl = document.getElementById('verification-error');
-        const successEl = document.getElementById('verification-success');
-        const actionsEl = document.getElementById('verification-actions');
-
-        if (loadingEl) loadingEl.classList.add('hidden');
-        if (errorEl) errorEl.classList.add('hidden');
-        if (successEl) successEl.classList.remove('hidden');
-        if (actionsEl) actionsEl.classList.remove('hidden');
-    }
-
-    showVerificationError(message) {
-        const loadingEl = document.getElementById('verification-loading');
-        const successEl = document.getElementById('verification-success');
-        const errorEl = document.getElementById('verification-error');
-        const actionsEl = document.getElementById('verification-actions');
-        const messageEl = document.getElementById('error-message');
-
-        if (loadingEl) loadingEl.classList.add('hidden');
-        if (successEl) successEl.classList.add('hidden');
-        if (errorEl) errorEl.classList.remove('hidden');
-        if (actionsEl) actionsEl.classList.remove('hidden');
-        if (messageEl) messageEl.textContent = message;
-    }
-
-    // 🎨 Premium Dashboard Renderer - COMPLETE
+    // 🎨 Premium Dashboard Renderer
     renderDashboard() {
         const user = this.getCurrentUser() || { firstName: 'User', lastName: '', email: 'user@example.com' };
         const stats = this.generateDashboardStats();
@@ -520,9 +550,9 @@ export class OdooHackathonApp {
                                 </div>
                                 <div>
                                     <h1 class="text-xl font-bold bg-gradient-to-r from-primary-600 to-purple-600 bg-clip-text text-transparent">
-                                        Odoo Hackathon
+                                        RentHub
                                     </h1>
-                                    <p class="text-xs text-gray-500">Championship Edition</p>
+                                    <p class="text-xs text-gray-500">Rental Platform</p>
                                 </div>
                             </div>
 
@@ -555,21 +585,21 @@ export class OdooHackathonApp {
                         <div class="bg-gradient-to-r from-primary-600 via-purple-600 to-pink-600 rounded-3xl p-8 text-white relative overflow-hidden">
                             <div class="relative z-10">
                                 <h2 class="text-3xl font-bold mb-2">Welcome back, ${user?.firstName}! 🚀</h2>
-                                <p class="text-lg opacity-90 mb-6">Ready to build something amazing at the Odoo Hackathon?</p>
+                                <p class="text-lg opacity-90 mb-6">Ready to manage your rental business?</p>
 
                                 <div class="flex flex-wrap gap-4">
-                                    <button onclick="createNewProject()" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 flex items-center">
+                                    <button onclick="createNewProduct()" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 flex items-center">
                                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                                         </svg>
-                                        Start New Project
+                                        Add New Product
                                     </button>
 
-                                    <button onclick="joinTeam()" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 flex items-center">
+                                    <button onclick="viewAllProducts()" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 flex items-center">
                                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                                         </svg>
-                                        Join a Team
+                                        View Products
                                     </button>
                                 </div>
                             </div>
@@ -578,17 +608,17 @@ export class OdooHackathonApp {
 
                     <!-- Dashboard Stats -->
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        ${this.renderStatCard('Projects', stats.projects, '📁', 'primary')}
-                        ${this.renderStatCard('Team Members', stats.teamMembers, '👥', 'purple')}
-                        ${this.renderStatCard('Hours Coded', stats.hoursCodedy, '⏰', 'green')}
-                        ${this.renderStatCard('Achievements', stats.achievements, '🏆', 'yellow')}
+                        ${this.renderStatCard('My Products', stats.products, '📁', 'primary')}
+                        ${this.renderStatCard('Active Rentals', stats.activeRentals, '🔄', 'purple')}
+                        ${this.renderStatCard('Total Earnings', stats.earnings, '💰', 'green')}
+                        ${this.renderStatCard('Customer Rating', stats.rating, '⭐', 'yellow')}
                     </div>
                 </main>
             </div>
         `;
     }
 
-    // 📈 Statistics Card Renderer - COMPLETE
+    // 📈 Statistics Card Renderer
     renderStatCard(title, value, icon, color) {
         const colorClasses = {
             primary: 'from-primary-500 to-blue-500',
@@ -612,7 +642,7 @@ export class OdooHackathonApp {
         `;
     }
 
-    // 📱 Profile Settings Renderer - COMPLETE
+    // 📱 Profile Settings Renderer
     renderProfile() {
         const user = this.getCurrentUser() || { firstName: 'User', lastName: '', email: 'user@example.com' };
 
@@ -676,7 +706,7 @@ export class OdooHackathonApp {
         `;
     }
 
-    // 🔒 Verification Success Page - COMPLETE
+    // 🔒 Verification Success Page
     renderVerificationSuccess() {
         return `
             <div class="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 flex items-center justify-center p-4 relative overflow-hidden">
@@ -692,7 +722,7 @@ export class OdooHackathonApp {
 
                         <h1 class="text-4xl font-bold text-gray-900 mb-4">🎉 Account Verified!</h1>
                         <p class="text-xl text-gray-600 mb-8 max-w-lg mx-auto">
-                            Congratulations! Your email has been successfully verified. You're now ready to participate in the Odoo Hackathon!
+                            Congratulations! Your email has been successfully verified. You're now ready to use RentHub!
                         </p>
 
                         <button
@@ -706,134 +736,182 @@ export class OdooHackathonApp {
         `;
     }
 
-    // 📱 Update Document Metadata - COMPLETE
-    updateDocumentMeta(route) {
-        document.title = route.title;
-        this.updateMetaTag('description', route.description);
-        this.updateMetaTag('og:title', route.title);
-        this.updateMetaTag('og:description', route.description);
+    // 🔄 Handle App State Changes
+    handleStateChange(newState) {
+        console.log('🔄 App state changed:', newState);
+        this.applyTheme();
     }
 
-    updateMetaTag(name, content) {
-        let meta = document.querySelector(`meta[name="${name}"], meta[property="${name}"]`);
-        if (!meta) {
-            meta = document.createElement('meta');
-            if (name.startsWith('og:')) {
-                meta.setAttribute('property', name);
-            } else {
-                meta.setAttribute('name', name);
+    // 🎯 Initialize Current Page
+    initializeCurrentPage() {
+        const currentView = this.state.currentView;
+        console.log(`🎯 Initializing page: ${currentView}`);
+
+        try {
+            switch (currentView) {
+                case 'dashboard':
+                    this.initializeDashboard();
+                    break;
+                case 'profile':
+                    this.initializeProfile();
+                    break;
+                case 'landing':
+                    this.initializeLanding();
+                    break;
+                default:
+                    console.log(`No specific initialization for ${currentView}`);
             }
-            document.head.appendChild(meta);
+
+            this.applyTheme();
+        } catch (error) {
+            console.error('Page initialization error:', error);
         }
-        meta.setAttribute('content', content);
     }
 
-    // 🎯 Event Listeners Setup - COMPLETE
-    setupEventListeners() {
-        // Navigation events
-        window.addEventListener('navigate', (event) => {
-            this.navigate(event.detail.view, event.detail.options);
-        });
+    // 🏠 Initialize Dashboard
+    initializeDashboard() {
+        console.log('🏠 Dashboard initialization');
 
-        // Online/Offline status
-        window.addEventListener('online', () => {
-            this.state.setState({ isOnline: true });
-            this.notifications.show('Connection restored', 'success');
-        });
+        // Dashboard specific functionality
+        window.createNewProduct = () => {
+            this.notifications.show('🚀 Product creation coming soon!', 'info');
+        };
 
-        window.addEventListener('offline', () => {
-            this.state.setState({ isOnline: false });
-            this.notifications.show('You are offline', 'warning');
-        });
-
-        // App state changes
-        window.addEventListener('appStateChange', (event) => {
-            this.handleStateChange(event.detail);
-        });
+        window.viewAllProducts = () => {
+            this.notifications.show('📦 Product listing coming soon!', 'info');
+        };
     }
 
-    // 🎬 Application Initialization - COMPLETE
-    async initializeApp() {
-        utils.log('🚀 Initializing Odoo Hackathon Application');
-
-        // Check for verification in URL first
-        const urlParams = new URLSearchParams(window.location.search);
-        const token = urlParams.get('token');
-        const path = window.location.pathname;
-
-        if (token && (path.includes('verify-email') || path.includes('verify'))) {
-            console.log('📧 Email verification detected, loading verification page');
-            console.log('🔍 Token found:', token.substring(0, 8) + '...');
-            this.navigate('verify-email');
-            return;
-        }
-
-        // Show loading screen
-        this.navigate('loading');
-
-        // Inject premium loading styles
-        this.injectPremiumLoadingStyles();
-
-        // Start premium loading experience
-        this.startPremiumLoadingExperience();
-
-        // Load saved state
-        this.state.loadFromStorage();
-
-        // Check authentication
-        const isAuthenticated = this.isAuthenticated();
-
-        // Enhanced loading simulation with progress
-        await this.simulateLoadingProgress();
-
-        // Navigate to appropriate view
-        if (isAuthenticated) {
-            this.state.user = this.getCurrentUser();
-            this.navigate('dashboard');
-        } else {
-            this.navigate('login');
-        }
-
-        // Initialize premium features
-        this.initializePremiumFeatures();
-
-        utils.log('✅ Application initialized successfully');
+    // 👤 Initialize Profile Page
+    initializeProfile() {
+        console.log('👤 Profile initialization');
     }
 
-    // 🎨 ELITE PROFESSIONAL LOADING STYLES INJECTION - COMPLETE
+    // 🏠 Initialize Landing Page
+    initializeLanding() {
+        console.log('🏠 Landing page initialization');
+    }
+
+    // Additional Event Listeners
+    attachDashboardListeners() {
+        console.log('📊 Dashboard listeners attached');
+    }
+
+    attachProfileListeners() {
+        console.log('👤 Profile listeners attached');
+    }
+
+    attachVerificationListeners() {
+        console.log('✅ Verification listeners attached');
+    }
+
+    // ⏱️ Setup Session Timeout
+    setupSessionTimeout() {
+        try {
+            if (this.sessionTimeoutId) {
+                clearTimeout(this.sessionTimeoutId);
+            }
+
+            const timeoutDuration = CONFIG?.SESSION_TIMEOUT || 30 * 60 * 1000;
+
+            this.sessionTimeoutId = setTimeout(() => {
+                console.log('⏰ Session timeout reached');
+                this.notifications.show('Your session has expired. Please sign in again.', 'warning');
+                this.handleLogout();
+            }, timeoutDuration);
+
+            console.log(`⏱️ Session timeout set for ${timeoutDuration / 1000 / 60} minutes`);
+
+        } catch (error) {
+            console.error('Session timeout setup failed:', error);
+        }
+    }
+
+    // 🎨 Apply Current Theme
+    applyTheme() {
+        document.documentElement.setAttribute('data-theme', this.state.theme || 'light');
+    }
+
+    // 📊 Generate Dashboard Stats
+    generateDashboardStats() {
+        return {
+            products: Math.floor(Math.random() * 10) + 1,
+            activeRentals: Math.floor(Math.random() * 5) + 1,
+            earnings: '₹' + (Math.floor(Math.random() * 50000) + 5000).toLocaleString(),
+            rating: (4.2 + Math.random() * 0.7).toFixed(1) + '⭐'
+        };
+    }
+
+    // 🔐 Authentication Helper Methods
+    isAuthenticated() {
+        return !!(localStorage.getItem('authToken') || localStorage.getItem('user'));
+    }
+
+    getCurrentUser() {
+        try {
+            const userStr = localStorage.getItem('user');
+            return userStr ? JSON.parse(userStr) : null;
+        } catch (error) {
+            console.error('Error parsing user data:', error);
+            return null;
+        }
+    }
+
+    // API Integration Methods
+    async loadProductsFromAPI() {
+        try {
+            const response = await fetch(`${this.apiEndpoints.products}/active`);
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success && result.data) {
+                    this.state.setState({ products: result.data });
+                    return result.data;
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load products from API:', error);
+        }
+        return null;
+    }
+
+    async loadPlatformStats() {
+        try {
+            const response = await fetch(`${this.apiEndpoints.products}/stats/platform`);
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success && result.data) {
+                    this.state.setState({ platformStats: result.data });
+                    return result.data;
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load platform stats:', error);
+        }
+        return null;
+    }
+
+    initializePremiumFeatures() {
+        this.setupSessionTimeout();
+    }
+
+    // Loading screen methods
     injectPremiumLoadingStyles() {
         const styles = `
             <style id="premium-loading-styles">
-            /* ELITE PROFESSIONAL LOADING SCREEN 2025 - COMPLETE STYLES */
             .elite-loading-container {
                 min-height: 100vh;
                 background: linear-gradient(135deg, #fafbfc 0%, #f4f6f8 100%);
                 display: flex;
                 flex-direction: column;
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'SF Pro Display', Roboto, sans-serif;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
                 color: #1a1f36;
-                position: relative;
-                overflow: hidden;
-            }
-
-            .elite-loading-container::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background:
-                    radial-gradient(circle at 20% 20%, rgba(79, 70, 229, 0.03) 0%, transparent 50%),
-                    radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.03) 0%, transparent 50%);
-                pointer-events: none;
             }
 
             .elite-header {
                 padding: 2rem 3rem 1rem;
                 border-bottom: 1px solid rgba(0, 0, 0, 0.06);
                 background: rgba(255, 255, 255, 0.8);
-                backdrop-filter: blur(20px) saturate(180%);
+                backdrop-filter: blur(20px);
             }
 
             .brand-lockup {
@@ -853,27 +931,6 @@ export class OdooHackathonApp {
                 align-items: center;
                 justify-content: center;
                 color: white;
-                box-shadow:
-                    0 4px 6px -1px rgba(79, 70, 229, 0.1),
-                    0 2px 4px -1px rgba(79, 70, 229, 0.06);
-                position: relative;
-                overflow: hidden;
-            }
-
-            .logo-symbol::before {
-                content: '';
-                position: absolute;
-                top: -50%;
-                left: -50%;
-                width: 200%;
-                height: 200%;
-                background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-                animation: logoShine 3s ease-in-out infinite;
-            }
-
-            @keyframes logoShine {
-                0%, 100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-                50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
             }
 
             .brand-name {
@@ -881,15 +938,12 @@ export class OdooHackathonApp {
                 font-weight: 700;
                 margin: 0;
                 color: #1a1f36;
-                letter-spacing: -0.02em;
-                line-height: 1.2;
             }
 
             .brand-descriptor {
                 font-size: 0.875rem;
                 color: #6b7280;
                 font-weight: 500;
-                letter-spacing: 0.025em;
             }
 
             .loading-core {
@@ -898,15 +952,14 @@ export class OdooHackathonApp {
                 align-items: center;
                 justify-content: center;
                 padding: 4rem 3rem;
-                gap: 6rem;
                 max-width: 1200px;
                 margin: 0 auto;
                 width: 100%;
             }
 
             .progress-system {
-                flex: 1;
                 max-width: 480px;
+                width: 100%;
             }
 
             .progress-header {
@@ -920,27 +973,17 @@ export class OdooHackathonApp {
                 font-size: 1rem;
                 font-weight: 600;
                 color: #374151;
-                line-height: 1.4;
-            }
-
-            .progress-metrics {
-                display: flex;
-                flex-direction: column;
-                align-items: flex-end;
-                gap: 0.25rem;
             }
 
             .progress-value {
                 font-size: 1.125rem;
                 font-weight: 700;
                 color: #4f46e5;
-                font-feature-settings: 'tnum';
             }
 
             .eta-estimate {
                 font-size: 0.75rem;
                 color: #9ca3af;
-                font-weight: 500;
             }
 
             .progress-track {
@@ -949,52 +992,13 @@ export class OdooHackathonApp {
                 border-radius: 3px;
                 overflow: hidden;
                 margin-bottom: 2rem;
-                position: relative;
-                box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
             }
 
             .progress-fill {
                 height: 100%;
                 width: 0%;
                 background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 50%, #10b981 100%);
-                border-radius: 3px;
-                transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-                position: relative;
-                overflow: hidden;
-            }
-
-            .progress-gradient {
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: linear-gradient(90deg,
-                    rgba(255, 255, 255, 0) 0%,
-                    rgba(255, 255, 255, 0.3) 50%,
-                    rgba(255, 255, 255, 0) 100%);
-                animation: progressShimmer 2s ease-in-out infinite;
-            }
-
-            .progress-pulse {
-                position: absolute;
-                top: -1px;
-                right: -2px;
-                width: 4px;
-                height: 8px;
-                background: rgba(255, 255, 255, 0.8);
-                border-radius: 2px;
-                animation: progressPulse 1s ease-in-out infinite;
-            }
-
-            @keyframes progressShimmer {
-                0%, 100% { transform: translateX(-100%); }
-                50% { transform: translateX(200%); }
-            }
-
-            @keyframes progressPulse {
-                0%, 100% { opacity: 0.6; transform: scaleY(1); }
-                50% { opacity: 1; transform: scaleY(1.2); }
+                transition: width 0.4s ease;
             }
 
             .init-sequence {
@@ -1008,18 +1012,7 @@ export class OdooHackathonApp {
                 align-items: center;
                 gap: 0.75rem;
                 padding: 0.75rem 0;
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-
-            .init-step.active {
-                background: rgba(79, 70, 229, 0.04);
-                border-radius: 8px;
-                padding-left: 1rem;
-                padding-right: 1rem;
-            }
-
-            .init-step.completed {
-                opacity: 0.6;
+                transition: all 0.3s ease;
             }
 
             .step-status {
@@ -1028,27 +1021,14 @@ export class OdooHackathonApp {
                 border-radius: 50%;
                 background: #d1d5db;
                 transition: all 0.3s ease;
-                position: relative;
             }
 
             .init-step.active .step-status {
                 background: #4f46e5;
-                box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
             }
 
             .init-step.completed .step-status {
                 background: #10b981;
-            }
-
-            .init-step.completed .step-status::after {
-                content: '✓';
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                font-size: 10px;
-                color: white;
-                font-weight: bold;
             }
 
             .step-label {
@@ -1058,217 +1038,9 @@ export class OdooHackathonApp {
                 color: #374151;
             }
 
-            .init-step.active .step-label {
-                color: #1f2937;
-                font-weight: 600;
-            }
-
             .step-indicator {
                 font-size: 8px;
                 color: #d1d5db;
-                animation: indicatorPulse 2s ease-in-out infinite;
-            }
-
-            .init-step.active .step-indicator {
-                color: #4f46e5;
-            }
-
-            @keyframes indicatorPulse {
-                0%, 100% { opacity: 0.4; }
-                50% { opacity: 1; }
-            }
-
-            /* Platform Preview Styles */
-            .platform-preview {
-                flex: 1;
-                max-width: 600px;
-                display: flex;
-                flex-direction: column;
-                gap: 2rem;
-            }
-
-            .preview-window {
-                background: white;
-                border-radius: 12px;
-                box-shadow:
-                    0 20px 25px -5px rgba(0, 0, 0, 0.1),
-                    0 10px 10px -5px rgba(0, 0, 0, 0.04);
-                border: 1px solid rgba(0, 0, 0, 0.05);
-                overflow: hidden;
-            }
-
-            .window-header {
-                height: 44px;
-                background: #f9fafb;
-                border-bottom: 1px solid #e5e7eb;
-                display: flex;
-                align-items: center;
-                padding: 0 1rem;
-                gap: 0.75rem;
-            }
-
-            .window-controls {
-                display: flex;
-                gap: 0.5rem;
-            }
-
-            .control-dot {
-                width: 12px;
-                height: 12px;
-                border-radius: 50%;
-            }
-
-            .control-dot.red { background: #ef4444; }
-            .control-dot.yellow { background: #f59e0b; }
-            .control-dot.green { background: #10b981; }
-
-            .window-title {
-                font-size: 0.75rem;
-                font-weight: 500;
-                color: #6b7280;
-            }
-
-            .preview-content {
-                padding: 1.5rem;
-                min-height: 280px;
-            }
-
-            /* Enhanced Skeleton System */
-            .skeleton-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 1.5rem;
-                padding-bottom: 1rem;
-                border-bottom: 1px solid #f3f4f6;
-            }
-
-            .skeleton-nav-item {
-                height: 12px;
-                background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
-                background-size: 200% 100%;
-                border-radius: 6px;
-                animation: skeletonShimmer 1.5s ease-in-out infinite;
-            }
-
-            .skeleton-nav-item:nth-child(1) { width: 80px; }
-            .skeleton-nav-item:nth-child(2) { width: 60px; }
-            .skeleton-nav-item:nth-child(3) { width: 70px; }
-
-            .skeleton-profile {
-                width: 32px;
-                height: 32px;
-                background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
-                background-size: 200% 100%;
-                border-radius: 50%;
-                animation: skeletonShimmer 1.5s ease-in-out infinite;
-            }
-
-            .skeleton-body {
-                display: flex;
-                gap: 1.5rem;
-            }
-
-            .skeleton-sidebar {
-                width: 180px;
-            }
-
-            .skeleton-menu-group {
-                display: flex;
-                flex-direction: column;
-                gap: 0.75rem;
-            }
-
-            .skeleton-menu-item {
-                height: 10px;
-                background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
-                background-size: 200% 100%;
-                border-radius: 5px;
-                animation: skeletonShimmer 1.5s ease-in-out infinite;
-            }
-
-            .skeleton-menu-item:nth-child(1) { width: 120px; animation-delay: 0.1s; }
-            .skeleton-menu-item:nth-child(2) { width: 100px; animation-delay: 0.2s; }
-            .skeleton-menu-item:nth-child(3) { width: 140px; animation-delay: 0.3s; }
-
-            .skeleton-main {
-                flex: 1;
-            }
-
-            .skeleton-title-bar {
-                height: 16px;
-                width: 200px;
-                background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
-                background-size: 200% 100%;
-                border-radius: 8px;
-                margin-bottom: 1.5rem;
-                animation: skeletonShimmer 1.5s ease-in-out infinite;
-            }
-
-            .skeleton-metrics {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 1rem;
-                margin-bottom: 1.5rem;
-            }
-
-            .skeleton-metric-card {
-                height: 60px;
-                background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
-                background-size: 200% 100%;
-                border-radius: 8px;
-                animation: skeletonShimmer 1.5s ease-in-out infinite;
-            }
-
-            .skeleton-metric-card:nth-child(1) { animation-delay: 0.1s; }
-            .skeleton-metric-card:nth-child(2) { animation-delay: 0.2s; }
-            .skeleton-metric-card:nth-child(3) { animation-delay: 0.3s; }
-            .skeleton-metric-card:nth-child(4) { animation-delay: 0.4s; }
-
-            .skeleton-chart-area {
-                height: 120px;
-                background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
-                background-size: 200% 100%;
-                border-radius: 8px;
-                animation: skeletonShimmer 1.5s ease-in-out infinite;
-                animation-delay: 0.5s;
-            }
-
-            @keyframes skeletonShimmer {
-                0% { background-position: -200% 0; }
-                100% { background-position: 200% 0; }
-            }
-
-            .capabilities-showcase {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 1rem;
-            }
-
-            .capability-item {
-                display: flex;
-                align-items: center;
-                gap: 0.75rem;
-                padding: 1rem;
-                background: rgba(255, 255, 255, 0.8);
-                border: 1px solid rgba(0, 0, 0, 0.05);
-                border-radius: 8px;
-                transition: all 0.3s ease;
-            }
-
-            .capability-item:hover {
-                transform: translateY(-1px);
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            }
-
-            .capability-icon {
-                font-size: 1.25rem;
-            }
-
-            .capability-text {
-                font-size: 0.875rem;
-                font-weight: 500;
-                color: #374151;
             }
 
             .elite-footer {
@@ -1292,79 +1064,20 @@ export class OdooHackathonApp {
                 gap: 0.5rem;
                 font-size: 0.75rem;
                 color: #9ca3af;
-                font-weight: 500;
             }
 
             .build-version {
                 color: #4f46e5;
                 font-weight: 600;
             }
-
-            .build-separator {
-                color: #d1d5db;
-            }
-
-            /* Responsive Design */
-            @media (max-width: 1200px) {
-                .loading-core {
-                    flex-direction: column;
-                    gap: 3rem;
-                    padding: 3rem 2rem;
-                }
-
-                .progress-system, .platform-preview {
-                    max-width: 600px;
-                    width: 100%;
-                }
-            }
-
-            @media (max-width: 768px) {
-                .elite-header, .elite-footer {
-                    padding-left: 1.5rem;
-                    padding-right: 1.5rem;
-                }
-
-                .brand-lockup {
-                    flex-direction: column;
-                    gap: 0.75rem;
-                    text-align: center;
-                }
-
-                .brand-identity {
-                    align-items: center;
-                }
-
-                .loading-core {
-                    padding: 2rem 1.5rem;
-                }
-
-                .skeleton-body {
-                    flex-direction: column;
-                }
-
-                .skeleton-sidebar {
-                    width: 100%;
-                }
-
-                .capabilities-showcase {
-                    grid-template-columns: 1fr;
-                }
-
-                .elite-footer {
-                    flex-direction: column;
-                    gap: 1rem;
-                    text-align: center;
-                }
-            }
             </style>
         `;
 
         document.head.insertAdjacentHTML('beforeend', styles);
-        console.log('✅ Elite professional loading styles injected');
     }
 
-    // 🏆 ELITE LOADING EXPERIENCE CONTROLLER - COMPLETE
     startPremiumLoadingExperience() {
+        // Loading animation logic
         const steps = [
             { id: 'step-security', duration: 800 },
             { id: 'step-database', duration: 600 },
@@ -1372,48 +1085,14 @@ export class OdooHackathonApp {
             { id: 'step-ui', duration: 400 }
         ];
 
-        const insights = [
-            "Optimizing for your team's workflow patterns...",
-            "Configuring enterprise security protocols...",
-            "Preparing real-time collaboration environment...",
-            "Initializing advanced analytics engine...",
-            "Platform deployment sequence complete"
-        ];
-
         let currentStep = 0;
-        let currentInsight = 0;
-
-        // Update insights
-        const updateInsights = () => {
-            const insightEl = document.getElementById('loading-insight');
-            if (insightEl && currentInsight < insights.length) {
-                insightEl.style.opacity = '0.5';
-                setTimeout(() => {
-                    insightEl.textContent = insights[currentInsight];
-                    insightEl.style.opacity = '1';
-                    currentInsight++;
-                }, 200);
-            }
-        };
-
-        const insightInterval = setInterval(() => {
-            if (currentInsight < insights.length) {
-                updateInsights();
-            } else {
-                clearInterval(insightInterval);
-            }
-        }, 2000);
-
-        // Process steps
         const processStep = () => {
             if (currentStep < steps.length) {
                 const step = steps[currentStep];
                 const stepEl = document.getElementById(step.id);
-
                 if (stepEl) {
                     stepEl.classList.add('active');
                 }
-
                 if (currentStep > 0) {
                     const prevStep = document.getElementById(steps[currentStep - 1].id);
                     if (prevStep) {
@@ -1421,57 +1100,37 @@ export class OdooHackathonApp {
                         prevStep.classList.add('completed');
                     }
                 }
-
                 currentStep++;
                 setTimeout(processStep, step.duration);
-            } else {
-                const lastStep = document.getElementById(steps[steps.length - 1].id);
-                if (lastStep) {
-                    lastStep.classList.remove('active');
-                    lastStep.classList.add('completed');
-                }
-                clearInterval(insightInterval);
             }
         };
 
         setTimeout(processStep, 500);
-        setTimeout(updateInsights, 1000);
     }
 
-    // 🏆 ELITE PROGRESS SIMULATION - COMPLETE
     async simulateLoadingProgress() {
         return new Promise((resolve) => {
             const progressFill = document.getElementById('progress-fill');
             const progressValue = document.getElementById('progress-value');
-            const systemStatus = document.getElementById('system-status');
-            const etaTime = document.getElementById('eta-time');
 
-            if (!progressFill || !progressValue) {
-                setTimeout(resolve, 3000);
+            if (!progressFill) {
+                setTimeout(resolve, 2000);
                 return;
             }
 
             const steps = [
-                { progress: 8, time: 2.8, status: 'Initializing secure environment...', delay: 400 },
-                { progress: 23, time: 2.2, status: 'Establishing database connections...', delay: 350 },
-                { progress: 41, time: 1.8, status: 'Configuring workspace settings...', delay: 400 },
-                { progress: 58, time: 1.3, status: 'Loading user interface components...', delay: 300 },
-                { progress: 76, time: 0.8, status: 'Optimizing performance parameters...', delay: 250 },
-                { progress: 94, time: 0.3, status: 'Finalizing initialization sequence...', delay: 200 },
-                { progress: 100, time: 0, status: 'Platform ready for deployment', delay: 300 }
+                { progress: 20, delay: 300 },
+                { progress: 50, delay: 400 },
+                { progress: 80, delay: 300 },
+                { progress: 100, delay: 200 }
             ];
 
             let currentStep = 0;
-
             const updateProgress = () => {
                 if (currentStep < steps.length) {
                     const step = steps[currentStep];
-
                     progressFill.style.width = step.progress + '%';
-                    progressValue.textContent = step.progress + '%';
-                    systemStatus.textContent = step.status;
-                    etaTime.textContent = step.time > 0 ? step.time + 's' : 'Complete';
-
+                    if (progressValue) progressValue.textContent = step.progress + '%';
                     currentStep++;
                     setTimeout(updateProgress, step.delay);
                 } else {
@@ -1482,211 +1141,9 @@ export class OdooHackathonApp {
             updateProgress();
         });
     }
-
-    // ✨ Premium Features Initialization - COMPLETE
-    initializePremiumFeatures() {
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js')
-                .then(registration => {
-                    utils.log('Service Worker registered:', registration.scope);
-                })
-                .catch(error => {
-                    utils.log('Service Worker registration failed:', error);
-                });
-        }
-
-        this.setupSessionTimeout();
-    }
-
-    // 🔐 Logout Handler - COMPLETE
-    handleLogout() {
-        utils.log('👋 User logging out');
-
-        if (this.authService && typeof this.authService.logout === 'function') {
-            this.authService.logout();
-        }
-
-        this.state.setState({
-            user: null,
-            currentView: 'login',
-            notifications: []
-        });
-
-        this.notifications.show('You have been logged out successfully', 'success');
-        this.navigate('login');
-    }
-
-    // 🎯 Attach Global Event Listeners - COMPLETE
-    attachGlobalListeners() {
-        try {
-            window.app = this;
-
-            window.handleLogout = () => this.handleLogout();
-
-            window.resendVerification = async () => {
-                try {
-                    const email = prompt('Please enter your email address to resend verification:');
-                    if (!email) return;
-
-                    const response = await fetch('http://localhost:8080/api/auth/resend-verification', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: email.trim() })
-                    });
-
-                    const data = await response.json();
-
-                    if (data.success) {
-                        this.notifications.show('✅ Verification email sent! Please check your inbox.', 'success');
-                    } else {
-                        this.notifications.show('❌ Failed to send verification email: ' + data.message, 'error');
-                    }
-                } catch (error) {
-                    console.error('Resend verification error:', error);
-                    this.notifications.show('❌ Error: ' + error.message, 'error');
-                }
-            };
-
-            window.createNewProject = () => {
-                this.notifications.show('🚀 Project creation coming soon!', 'info');
-            };
-
-            window.joinTeam = () => {
-                this.notifications.show('👥 Team joining coming soon!', 'info');
-            };
-
-            utils.log('✅ Global listeners attached successfully');
-
-        } catch (error) {
-            utils.error('❌ Failed to attach global listeners:', error);
-        }
-    }
-
-    // 🎯 Additional Event Listeners - COMPLETE
-    attachDashboardListeners() {
-        console.log('📊 Dashboard listeners attached');
-    }
-
-    attachProfileListeners() {
-        console.log('👤 Profile listeners attached');
-    }
-
-    attachVerificationListeners() {
-        console.log('✅ Verification listeners attached');
-    }
-
-    // 🔄 Handle App State Changes - COMPLETE
-    handleStateChange(newState) {
-        utils.log('🔄 App state changed:', newState);
-        this.applyTheme();
-    }
-
-    // 🎯 Initialize Current Page - COMPLETE
-    initializeCurrentPage() {
-        const currentView = this.state.currentView;
-        utils.log(`🎯 Initializing page: ${currentView}`);
-
-        try {
-            switch (currentView) {
-                case 'dashboard':
-                    this.initializeDashboard();
-                    break;
-                case 'profile':
-                    this.initializeProfile();
-                    break;
-                default:
-                    utils.log(`No specific initialization for ${currentView}`);
-            }
-
-            this.applyTheme();
-        } catch (error) {
-            utils.error('Page initialization error:', error);
-        }
-    }
-
-    // 🏠 Initialize Dashboard - COMPLETE
-    initializeDashboard() {
-        utils.log('🏠 Dashboard initialization');
-    }
-
-    // 👤 Initialize Profile Page - COMPLETE
-    initializeProfile() {
-        utils.log('👤 Profile initialization');
-    }
-
-    // ⏱️ Setup Session Timeout - COMPLETE
-    setupSessionTimeout() {
-        try {
-            if (this.sessionTimeoutId) {
-                clearTimeout(this.sessionTimeoutId);
-            }
-
-            const timeoutDuration = CONFIG?.SESSION_TIMEOUT || 30 * 60 * 1000;
-
-            this.sessionTimeoutId = setTimeout(() => {
-                utils.log('⏰ Session timeout reached');
-                this.notifications.show('Your session has expired. Please sign in again.', 'warning');
-                this.handleLogout();
-            }, timeoutDuration);
-
-            utils.log(`⏱️ Session timeout set for ${timeoutDuration / 1000 / 60} minutes`);
-
-        } catch (error) {
-            utils.error('Session timeout setup failed:', error);
-        }
-    }
-
-    // 🔍 Check Session Validity - COMPLETE
-    async checkSession() {
-        try {
-            if (this.authService && typeof this.authService.validateSession === 'function') {
-                const isValid = await this.authService.validateSession();
-                if (!isValid) {
-                    utils.log('🔒 Session invalid, redirecting to login');
-                    this.navigate('login');
-                }
-                return isValid;
-            }
-            return false;
-        } catch (error) {
-            utils.error('❌ Session check failed:', error);
-            this.navigate('login');
-            return false;
-        }
-    }
-
-    // 🎨 Apply Current Theme - COMPLETE
-    applyTheme() {
-        document.documentElement.setAttribute('data-theme', this.state.theme || 'light');
-    }
-
-    // 📊 Generate Dashboard Stats - COMPLETE
-    generateDashboardStats() {
-        return {
-            projects: Math.floor(Math.random() * 10) + 1,
-            teamMembers: Math.floor(Math.random() * 50) + 1,
-            hoursCodedy: Math.floor(Math.random() * 100) + 10,
-            achievements: Math.floor(Math.random() * 20) + 1
-        };
-    }
-
-    // 🔐 Authentication Helper Methods - COMPLETE
-    isAuthenticated() {
-        return !!(localStorage.getItem('authToken') || localStorage.getItem('user'));
-    }
-
-    getCurrentUser() {
-        try {
-            const userStr = localStorage.getItem('user');
-            return userStr ? JSON.parse(userStr) : null;
-        } catch (error) {
-            console.error('Error parsing user data:', error);
-            return null;
-        }
-    }
 }
 
-// 🎨 Advanced Animation System - COMPLETE
+// 🎨 Animation System
 class AppAnimations {
     async exitAnimation(element, duration = 600) {
         element.style.transition = `all ${duration}ms cubic-bezier(0.4, 0, 0.2, 1)`;
@@ -1699,21 +1156,11 @@ class AppAnimations {
         element.style.opacity = '0';
 
         const animations = {
-            fadeIn: () => {
-                element.style.transform = 'translateY(20px) scale(0.95)';
-            },
-            slideInRight: () => {
-                element.style.transform = 'translateX(100px)';
-            },
-            slideInLeft: () => {
-                element.style.transform = 'translateX(-100px)';
-            },
-            slideInUp: () => {
-                element.style.transform = 'translateY(100px)';
-            },
-            bounceIn: () => {
-                element.style.transform = 'scale(0.3)';
-            }
+            fadeIn: () => element.style.transform = 'translateY(20px) scale(0.95)',
+            slideInRight: () => element.style.transform = 'translateX(100px)',
+            slideInLeft: () => element.style.transform = 'translateX(-100px)',
+            slideInUp: () => element.style.transform = 'translateY(100px)',
+            bounceIn: () => element.style.transform = 'scale(0.3)'
         };
 
         animations[animationType]?.();
@@ -1728,10 +1175,7 @@ class AppAnimations {
     }
 }
 
-// 🔔 Notification Management System - COMPLETE
-
-
-// 📊 Analytics Management System - COMPLETE
+// 📊 Analytics Management System
 class AnalyticsManager {
     constructor() {
         this.events = [];
@@ -1751,7 +1195,7 @@ class AnalyticsManager {
         };
 
         this.events.push(event);
-        utils.log('📊 Analytics event:', event);
+        console.log('📊 Analytics event:', event);
     }
 
     getSessionId() {
@@ -1763,3 +1207,9 @@ class AnalyticsManager {
         return sessionId;
     }
 }
+
+// ✅ Initialize and export the application
+const app = new OdooHackathonApp();
+window.app = app;
+
+export default app;
