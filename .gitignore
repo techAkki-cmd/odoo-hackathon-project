@@ -1,0 +1,28 @@
+# Backend (Spring Boot)
+/backend/target/
+/backend/.mvn/
+/backend/mvnw
+/backend/mvnw.cmd
+*.jar
+*.war
+*.ear
+*.class
+
+# Frontend (Node.js)
+/frontend/node_modules/
+/frontend/dist/
+/frontend/build/
+/frontend/.env
+/frontend/.env.local
+/frontend/.env.production
+/frontend/npm-debug.log*
+
+# IDE & OS
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
