@@ -115,11 +115,10 @@ Rentalhub/
 ## 🛠 Technologies Used
 
 ### 🔧 Backend
-- MongoDB
-- Express
+- mySQL
+- Spring Boot
 - JWT Authentication
-- Node
-- Cloudinary
+- Spring MVC
 
 ### 🎨 Frontend & Admin Panel
 - React.js
@@ -259,6 +258,8 @@ We welcome contributions to improve **Renthub**!
 
 ---
 
+## 🔗Video  Link
+https://drive.google.com/file/d/1yOXyAwp6q-5nDOk7gNYZm3ZifQUnAwLT/view?usp=drive_link
 ## ⭐ Motivation
 
 > 💡**PS:** If you found this project helpful or inspiring, please **[⭐ star the repository](https://github.com/techAkki-cmd/odoo-hackathon-project)** — it keeps me motivated to build and share more awesome projects like this one!
