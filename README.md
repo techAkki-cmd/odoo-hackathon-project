@@ -3,6 +3,8 @@
 RentHub is a peer-to-peer rental platform that enables users to list, find, and rent items or spaces directly from others — saving money and reducing waste. Designed to make renting simple and accessible, the platform connects people who have underused resources with those who need them, fostering a community of sharing, convenience, and trust.
 
 ---
+## 🔗Video  Link
+https://drive.google.com/file/d/1yOXyAwp6q-5nDOk7gNYZm3ZifQUnAwLT/view?usp=drive_link
 ## 👥 Team Details
 **Team Name:** CodeStorm
  
