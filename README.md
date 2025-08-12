@@ -119,6 +119,8 @@ Rentalhub/
 - Spring Boot
 - JWT Authentication
 - Spring MVC
+- Hibernate
+- Cloudinary
 
 ### 🎨 Frontend & Admin Panel
 - React.js
