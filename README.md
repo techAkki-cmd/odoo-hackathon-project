@@ -115,11 +115,10 @@ Rentalhub/
 ## 🛠 Technologies Used
 
 ### 🔧 Backend
-- mySQL
-- Spring Boot
+- MongoDB
+- Express
 - JWT Authentication
-- Spring MVC
-- Hibernate
+- Node
 - Cloudinary
 
 ### 🎨 Frontend & Admin Panel
